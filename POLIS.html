@@ -1,36 +1,226 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POLIS</title>
-    <script>
-        const PROXY = 'https://new.proxy.url'; // Updated PROXY variable
-
-        async function fetchNews() {
-            try {
-                const response = await fetch(PROXY + '/path/to/rss');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.text();
-                // Process RSS feed data...
-            } catch (error) {
-                console.error('Error fetching news:', error);
-                // Fallback mechanism
-                displayFallbackNews();
-            }
-        }
-
-        function displayFallbackNews() {
-            // Logic to display fallback news or a message to the user
-            console.log('Displaying fallback news...');
-        }
-
-        // Fetch news on load
-        window.onload = fetchNews;
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POLIS - Deutsche Nachrichten & Bildung</title>
+<style>
+body { font-family: Georgia, serif; background: #f4efe6; color: #0f0e0b; margin: 0; padding: 20px; }
+h1 { text-align: center; color: #c8102e; }
+#news-container { max-width: 1000px; margin: 0 auto; }
+.news-item { background: white; padding: 15px; margin: 10px 0; border-left: 3px solid #c8102e; }
+.news-title { font-size: 18px; font-weight: bold; cursor: pointer; color: #1a3a6b; }
+.news-title:hover { color: #c8102e; }
+.news-source { color: #6b6560; font-size: 12px; }
+.news-body { font-size: 14px; line-height: 1.6; margin-top: 10px; }
+button { background: #c8102e; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 3px; }
+button:hover { background: #a00d26; }
+.status { padding: 10px; background: #ebe5d9; border-left: 3px solid #c8102e; margin: 10px 0; }
+.ticker { background: #c8102e; color: white; padding: 10px; overflow: hidden; white-space: nowrap; }
+.ticker-text { display: inline-block; animation: scroll 30s linear infinite; padding-left: 100%; }
+@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+</style>
 </head>
 <body>
-    <h1>POLIS News</h1>
-    <div id="news-container"></div>
+
+<h1>📰 POLIS - Politische Nachrichten & Bildung Deutschlands</h1>
+<div class="ticker">
+  <div class="ticker-text">
+    Koalitionsverhandlungen 2026 | EU-Digitalmarktgesetz | Wahlrechtsreform | Ukraine-Friedensgespräche | Rentenreform 2026
+  </div>
+</div>
+
+<div id="news-container">
+  <div style="text-align: center; margin: 20px 0;">
+    <button onclick="fetchNews()">🔄 Nachrichten aktualisieren</button>
+    <div id="status" class="status" style="display:none;"></div>
+  </div>
+  <div id="news-list"></div>
+</div>
+
+<script>
+// ============================================================
+// FALLBACK NEWS DATA (when RSS feeds fail)
+// ============================================================
+const FALLBACK_NEWS = [
+  {
+    title: "Koalitionsverhandlungen 2026: Wer regiert Deutschland als Nächstes?",
+    source: "Tagesschau",
+    date: "18. Feb 2026",
+    description: "Nach der Bundestagswahl 2025 ringen die Parteien um eine Koalition. Die Weichenstellungen der nächsten Wochen bestimmen vier Jahre deutsche Politik.",
+    url: "https://www.tagesschau.de/politik"
+  },
+  {
+    title: "Transatlantische Spannungen: Deutschland zwischen Washington und Brüssel",
+    source: "Spiegel",
+    date: "18. Feb 2026",
+    description: "Die veränderte Haltung der USA zur NATO stellt die deutsche Außenpolitik vor neue Herausforderungen.",
+    url: "https://www.spiegel.de/politik/ausland"
+  },
+  {
+    title: "EU-Parlament: Neues Digitalmarktgesetz reguliert Tech-Giganten",
+    source: "EU-Parlament",
+    date: "17. Feb 2026",
+    description: "Das Europäische Parlament hat neue Regulierungen für Digitalkonzerne verabschiedet.",
+    url: "https://www.europarl.europa.eu/news/de"
+  },
+  {
+    title: "Rentenreform 2026: Das Generationenkapital - was steckt dahinter?",
+    source: "Deutschlandfunk",
+    date: "17. Feb 2026",
+    description: "Das geplante Generationenkapital soll die gesetzliche Rente stabilisieren. Ökonomen streiten über Wirksamkeit und Risiken.",
+    url: "https://www.deutschlandfunk.de/nachrichten/wirtschaft"
+  }
+];
+
+// ============================================================
+// CORS PROXIES (multiple services as fallback)
+// ============================================================
+const CORS_PROXIES = [
+  "https://api.allorigins.win/get?url=",
+  "https://corsproxy.io/?",
+  "https://api.rss2json.com/v1/api.json?count=8&rss_url="
+];
+
+// ============================================================
+// RSS FEEDS
+// ============================================================
+const RSS_FEEDS = [
+  { url: "https://www.tagesschau.de/xml/rss2/", name: "Tagesschau" },
+  { url: "https://www.zdf.de/rss/zdf/nachrichten", name: "ZDF" },
+  { url: "https://www.deutschlandfunk.de/nachrichten.2378.de.rss", name: "Deutschlandfunk" },
+  { url: "https://rss.dw.com/rdf/rss-de-pol", name: "Deutsche Welle" }
+];
+
+// ============================================================
+// MAIN FETCH FUNCTION WITH CORS PROXY FALLBACK
+// ============================================================
+async function fetchNews() {
+  const newsList = document.getElementById('news-list');
+  const status = document.getElementById('status');
+  
+  newsList.innerHTML = '<p style="text-align:center; color:#6b6560;">Nachrichten werden geladen...</p>';
+  status.style.display = 'none';
+  
+  let allNews = [];
+  let failedSources = [];
+  
+  // Try to fetch from each RSS feed
+  for (let feed of RSS_FEEDS) {
+    const items = await fetchFeedWithFallback(feed);
+    if (items.length > 0) {
+      allNews = allNews.concat(items);
+    } else {
+      failedSources.push(feed.name);
+    }
+  }
+  
+  // If no news fetched, use fallback
+  if (allNews.length === 0) {
+    status.style.display = 'block';
+    status.innerHTML = '⚠️ Live-Nachrichten nicht verfügbar. Zeige Beispielmeldungen aus der Datenbank.';
+    allNews = FALLBACK_NEWS;
+  } else if (failedSources.length > 0) {
+    status.style.display = 'block';
+    status.innerHTML = '⚠️ Hinweis: ' + failedSources.join(', ') + ' konnten nicht geladen werden. Andere Quellen aktiv.';
+  }
+  
+  renderNews(allNews);
+  document.getElementById('news-list').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ============================================================
+// FETCH SINGLE FEED WITH CORS PROXY FALLBACK
+// ============================================================
+async function fetchFeedWithFallback(feed) {
+  for (let proxy of CORS_PROXIES) {
+    try {
+      const fullUrl = proxy + encodeURIComponent(feed.url);
+      const response = await fetch(fullUrl, { timeout: 5000 });
+      
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.text();
+      
+      // Try to parse XML
+      const parser = new DOMParser();
+      const xml = parser.parseFromString(data, 'text/xml');
+      
+      if (xml.documentElement.nodeName === 'parsererror') {
+        throw new Error('XML parse error');
+      }
+      
+      const items = xml.querySelectorAll('item');
+      const results = [];
+      
+      for (let i = 0; i < Math.min(items.length, 5); i++) {
+        const item = items[i];
+        const title = item.querySelector('title')?.textContent || '';
+        const desc = stripHtml(item.querySelector('description')?.textContent || '');
+        const link = item.querySelector('link')?.textContent || '';
+        const pubDate = item.querySelector('pubDate')?.textContent || new Date().toISOString();
+        
+        if (title && link) {
+          results.push({
+            title: title,
+            description: desc.substring(0, 200) + (desc.length > 200 ? '...' : ''),
+            source: feed.name,
+            url: link,
+            date: formatDate(pubDate)
+          });
+        }
+      }
+      
+      if (results.length > 0) {
+        console.log('✓ Successfully loaded from ' + feed.name);
+        return results;
+      }
+    } catch (error) {
+      console.log('Error with proxy/feed: ' + error.message);
+      continue;
+    }
+  }
+  
+  return [];
+}
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+function stripHtml(html) {
+  return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+}
+
+function formatDate(dateStr) {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('de-DE', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch (e) {
+    return dateStr;
+  }
+}
+
+function renderNews(items) {
+  const newsList = document.getElementById('news-list');
+  newsList.innerHTML = '';
+  
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'news-item';
+    div.innerHTML = `
+      <div class="news-source">${item.source} · ${item.date}</div>
+      <div class="news-title" onclick="window.open('${item.url}', '_blank')">${item.title}</div>
+      <div class="news-body">${item.description}</div>
+    `;
+    newsList.appendChild(div);
+  });
+}
+
+// Load news on page load
+window.addEventListener('load', fetchNews);
+
+// Auto-refresh every 30 minutes
+setInterval(fetchNews, 30 * 60 * 1000);
+</script>
+
 </body>
 </html>
