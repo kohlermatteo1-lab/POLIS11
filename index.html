@@ -1,2 +1,909 @@
-# POLIS11
-Zeitung
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POLIS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0b;--paper:#f4efe6;--paper2:#ebe5d9;--red:#c8102e;--blue:#1a3a6b;--gold:#b8860b;--green:#2d6a4f;--muted:#6b6560;--border:#c5bfb4}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:'Source Serif 4',Georgia,serif;min-height:100vh}
+#site-header{background:var(--paper);border-bottom:3px double var(--ink);position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:5px 20px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.07em}
+.live-badge{display:flex;align-items:center;gap:5px;color:var(--red)}
+.blink-dot{width:6px;height:6px;background:var(--red);border-radius:50%;animation:blink 1.2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+.masthead{text-align:center;padding:12px 20px 8px;border-bottom:1px solid var(--border)}
+.site-logo{font-family:'Playfair Display',serif;font-size:clamp(2rem,6vw,4.5rem);font-weight:900;letter-spacing:-.03em;line-height:1}
+.site-logo em{color:var(--red);font-style:normal}
+.logo-sub{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+#main-nav{display:flex;justify-content:center;flex-wrap:wrap}
+.nav-btn{background:none;border:none;border-right:1px solid var(--border);padding:9px 18px;font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;color:var(--muted);transition:background .15s,color .15s}
+.nav-btn:first-child{border-left:1px solid var(--border)}
+.nav-btn:hover{background:var(--ink);color:var(--paper)}
+.nav-btn.active{background:var(--red);color:#fff}
+.ticker{overflow:hidden;background:var(--red);padding:7px 0}
+.ticker-inner{display:flex;white-space:nowrap;animation:scrolltick 80s linear infinite}
+@keyframes scrolltick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.t-item{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.08em;color:#fff;padding:0 32px}
+.t-sep{color:rgba(255,255,255,.3);margin:0 4px}
+.page{display:none}
+.page.active{display:block;animation:fadein .25s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px}
+.section-label{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--red);border-top:2px solid var(--red);padding-top:5px;margin-bottom:18px;display:inline-block}
+.news-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.news-meta-bar{display:flex;align-items:center;gap:12px}
+.news-updated-lbl{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.07em}
+.news-refresh-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'DM Mono',monospace;font-size:.57rem;letter-spacing:.08em;padding:5px 12px;cursor:pointer;transition:all .2s}
+.news-refresh-btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.news-refresh-btn.spinning{animation:spin .7s linear infinite;pointer-events:none}
+.news-fetch-status{font-family:'DM Mono',monospace;font-size:.62rem;padding:10px 14px;margin-bottom:14px;border-left:3px solid var(--red);background:var(--paper2);color:var(--muted)}
+.news-loading{display:flex;gap:5px;align-items:center;padding:28px 0;color:var(--muted);font-family:'DM Mono',monospace;font-size:.7rem}
+.news-loading .spin-ring{width:18px;height:18px;border-width:2px}
+.news-src-badge{display:inline-block;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;background:var(--paper2);color:var(--muted);padding:1px 6px;margin-left:6px;vertical-align:middle}
+.news-src-badge.live{background:var(--green);color:#fff}
+@keyframes spin{to{transform:rotate(360deg)}}
+.news-layout{display:grid;grid-template-columns:1.8fr 1fr;border:1px solid var(--border)}
+.news-main{padding:24px;border-right:1px solid var(--border)}
+.art-meta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.09em;margin-bottom:10px;text-transform:uppercase}
+.art-meta .cat-tag{color:var(--red)}
+.art-meta .src-tag{color:var(--blue);cursor:pointer}
+.art-meta .src-tag:hover{text-decoration:underline}
+.hero-title{font-family:'Playfair Display',serif;font-size:clamp(1.5rem,2.8vw,2.5rem);font-weight:900;line-height:1.1;margin-bottom:12px;letter-spacing:-.02em;cursor:pointer;transition:color .15s}
+.hero-title:hover{color:var(--red)}
+.hero-body{font-size:.97rem;line-height:1.75;color:#2a2825;font-weight:300;margin-bottom:16px}
+.ornament{text-align:center;color:var(--border);letter-spacing:.6em;margin:14px 0}
+.cat-bar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:20px}
+.cat-btn{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;padding:4px 11px;border:1px solid var(--border);background:none;cursor:pointer;color:var(--muted);transition:all .15s}
+.cat-btn.active,.cat-btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.news-item{padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.news-item:last-child{border-bottom:none;margin-bottom:0}
+.news-item-title{font-family:'Playfair Display',serif;font-size:1.06rem;font-weight:700;line-height:1.3;margin-bottom:5px;cursor:pointer;transition:color .15s}
+.news-item-title:hover{color:var(--red)}
+.news-item-body{font-size:.85rem;line-height:1.65;color:var(--muted);font-weight:300}
+.side-hdr{padding:9px 16px;border-bottom:1px solid var(--border)}
+.side-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.side-item:hover{background:var(--paper2)}
+.side-item:last-child{border-bottom:none}
+.side-num{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:900;color:var(--border);line-height:1;margin-bottom:2px}
+.side-title{font-family:'Playfair Display',serif;font-size:.86rem;font-weight:700;line-height:1.3;margin-bottom:2px}
+.side-meta{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.card-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-top:none}
+.mini-card{background:var(--paper);padding:17px}
+.mini-card-meta{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.mini-card-title{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:700;line-height:1.3;margin-bottom:5px;cursor:pointer;transition:color .15s}
+.mini-card-title:hover{color:var(--red)}
+.mini-card-body{font-size:.8rem;line-height:1.55;color:var(--muted);font-weight:300}
+.intro-text{font-size:.87rem;color:var(--muted);font-weight:300;line-height:1.65;margin-bottom:13px}
+.filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.sources-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:1px;background:var(--border);border:1px solid var(--border)}
+.source-card{background:var(--paper);padding:18px;cursor:pointer;transition:background .18s}
+.source-card:hover{background:var(--ink)}
+.source-card:hover .sc-name,.source-card:hover .sc-desc{color:var(--paper)}
+.source-card:hover .sc-tag{background:var(--red);color:#fff}
+.source-card:hover .sc-link{color:var(--paper2)}
+.sc-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px}
+.sc-name{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:var(--ink);transition:color .18s}
+.sc-flag{font-size:1.2rem}
+.sc-badges{display:flex;gap:5px;align-items:center;margin-bottom:7px;flex-wrap:wrap}
+.sc-tag{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;background:var(--paper2);color:var(--muted);padding:2px 7px;transition:all .18s}
+.badge-free{font-family:'DM Mono',monospace;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;background:var(--green);color:#fff;padding:2px 7px}
+.badge-part{font-family:'DM Mono',monospace;font-size:.52rem;background:var(--gold);color:#fff;padding:2px 7px;letter-spacing:.08em;text-transform:uppercase}
+.sc-desc{font-size:.78rem;line-height:1.5;color:var(--muted);font-weight:300;margin-bottom:8px;transition:color .18s}
+.sc-link{font-family:'DM Mono',monospace;font-size:.59rem;color:var(--blue);transition:color .18s}
+.edu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(298px,1fr));gap:17px;margin-top:17px}
+.edu-card{border:1px solid var(--border);overflow:hidden;transition:transform .18s,box-shadow .18s}
+.edu-card:hover{transform:translateY(-3px);box-shadow:5px 5px 0 var(--ink)}
+.edu-head{padding:18px;position:relative;overflow:hidden}
+.edu-head::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0,rgba(255,255,255,.07) 1px,transparent 0,transparent 6px)}
+.edu-emoji{font-size:1.6rem;display:block;margin-bottom:5px}
+.edu-level{font-family:'DM Mono',monospace;font-size:.57rem;letter-spacing:.2em;text-transform:uppercase;opacity:.8;margin-bottom:3px}
+.edu-title-text{font-family:'Playfair Display',serif;font-size:1.13rem;font-weight:700;line-height:1.2}
+.edu-body{padding:15px}
+.edu-steps{list-style:none;margin-bottom:12px}
+.edu-step{display:flex;gap:9px;margin-bottom:9px;font-size:.82rem;line-height:1.45;align-items:flex-start}
+.step-num{font-family:'DM Mono',monospace;font-size:.58rem;background:var(--ink);color:var(--paper);min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.edu-link-btns{display:flex;flex-wrap:wrap;gap:6px}
+.edu-link-btn{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.05em;padding:5px 10px;border:1px solid var(--border);background:none;color:var(--ink);transition:all .15s;cursor:pointer}
+.edu-link-btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ai-box{background:var(--ink);color:var(--paper);padding:24px;position:relative;overflow:hidden;margin-bottom:24px}
+.ai-box::before{content:'KI';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-family:'Playfair Display',serif;font-size:7rem;font-weight:900;opacity:.04;pointer-events:none}
+.ai-label{font-family:'DM Mono',monospace;font-size:.59rem;letter-spacing:.25em;text-transform:uppercase;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.ai-input-row{display:flex;gap:8px;margin-bottom:15px}
+.lex-toolbar{display:flex;gap:8px;align-items:stretch}
+#lex-search{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:var(--paper);padding:10px 14px;font-family:'Source Serif 4',serif;font-size:.9rem;outline:none;transition:border-color .18s}
+#lex-search::placeholder{color:rgba(255,255,255,.35)}
+#lex-search:focus{border-color:var(--red)}
+.lex-add-trigger{background:var(--red);border:none;color:#fff;padding:10px 18px;font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0}
+.lex-add-trigger:hover{background:#a00d26}
+#lex-cat-bar{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.lex-cat-pill{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border:1px solid rgba(255,255,255,.18);background:transparent;color:rgba(255,255,255,.55);cursor:pointer;transition:all .15s}
+.lex-cat-pill:hover,.lex-cat-pill.active{background:var(--red);border-color:var(--red);color:#fff}
+.lex-form-wrap{background:var(--paper2);border:1px solid var(--border);border-top:3px solid var(--red);padding:24px;margin-top:18px;animation:fadein .2s ease}
+.lex-form-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.lex-form-x{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--muted);line-height:1;padding:0 4px}
+.lex-form-x:hover{color:var(--red)}
+.lex-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lex-form-full{grid-column:1/-1}
+.lex-form-field{display:flex;flex-direction:column;gap:5px}
+.lex-form-label{font-family:'DM Mono',monospace;font-size:.57rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+.lex-form-input{background:var(--paper);border:1px solid var(--border);color:var(--ink);padding:9px 12px;font-family:'Source Serif 4',serif;font-size:.88rem;outline:none;transition:border-color .18s;width:100%}
+.lex-form-input:focus{border-color:var(--red)}
+.lex-form-textarea{min-height:90px;resize:vertical;font-family:'Source Serif 4',serif}
+.lex-cat-row{display:flex;gap:7px}
+.lex-form-actions{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px}
+.lex-save-btn{background:var(--ink);border:none;color:var(--paper);padding:11px 26px;font-family:'DM Mono',monospace;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:background .15s}
+.lex-save-btn:hover{background:var(--red)}
+.lf-msg{font-family:'DM Mono',monospace;font-size:.64rem;color:var(--green)}
+.lf-msg.err{color:var(--red)}
+.lex-stats{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.08em;margin-top:14px;margin-bottom:4px}
+#lex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);margin-top:10px}
+.lex-card{background:var(--paper);padding:18px;transition:background .15s;position:relative}
+.lex-card:hover{background:var(--paper2)}
+.lex-card.custom{border-left:3px solid var(--red)}
+.lex-card-actions{position:absolute;top:10px;right:10px;display:none;gap:5px}
+.lex-card:hover .lex-card-actions{display:flex}
+.lex-del-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:.65rem;padding:2px 7px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .15s}
+.lex-del-btn:hover{background:var(--red);border-color:var(--red);color:#fff}
+.lex-term{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--ink);margin-bottom:4px;padding-right:36px}
+.lex-cat{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red);margin-bottom:7px}
+.lex-def{font-size:.84rem;line-height:1.6;color:var(--muted);font-weight:300}
+.lex-empty{padding:24px;color:var(--muted);font-style:italic;grid-column:1/-1;text-align:center;font-family:'DM Mono',monospace;font-size:.75rem}
+@media(max-width:600px){.lex-form-grid{grid-template-columns:1fr}.lex-toolbar{flex-direction:column}}
+@media(max-width:768px){.news-layout{grid-template-columns:1fr}.news-main{border-right:none;border-bottom:1px solid var(--border)}.card-row{grid-template-columns:1fr}.topbar span:nth-child(2){display:none}.ai-input-row{flex-direction:column}.browser-bar{gap:5px}#b-site-name{display:none}}
+</style>
+</head>
+<body>
+<div id="site-header">
+  <div class="topbar">
+    <span id="date-label">...</span>
+    <span>Politisches Wissen &middot; Freie Quellen &middot; Bildung fuer alle</span>
+    <span class="live-badge"><span class="blink-dot"></span>LIVE</span>
+  </div>
+  <div class="masthead">
+    <div class="site-logo">P<em>O</em>LIS</div>
+    <div class="logo-sub">Die freie politische Tageszeitung &amp; Bildungsplattform Deutschlands</div>
+  </div>
+  <nav id="main-nav">
+    <button class="nav-btn active" data-page="news">&#128240; Nachrichten</button>
+    <button class="nav-btn" data-page="sources">&#127760; Freie Quellen</button>
+    <button class="nav-btn" data-page="edu">&#127891; Weiterbildung</button>
+    <button class="nav-btn" data-page="ai">&#128214; Lexikon</button>
+  </nav>
+</div>
+<div class="ticker"><div class="ticker-inner" id="ticker-inner"></div></div>
+<div id="page-news" class="page active">
+  <div class="wrap">
+    <div class="news-topbar">
+      <div class="section-label" id="edition-label" style="margin-bottom:0">Heutige Ausgabe</div>
+      <div class="news-meta-bar">
+        <span id="news-last-updated" class="news-updated-lbl"></span>
+        <button id="news-refresh-btn" class="news-refresh-btn" title="Nachrichten aktualisieren">&#8635; Aktualisieren</button>
+      </div>
+    </div>
+    <div id="news-fetch-status" class="news-fetch-status" style="display:none"></div>
+    <div class="news-layout">
+      <div class="news-main">
+        <div id="hero-area">
+          <div class="art-meta"><span class="cat-tag">Leitartikel</span> &middot; <span class="src-tag" id="hero-src-btn">Tagesschau</span> &middot; <span id="hero-date"></span></div>
+          <div class="hero-title" id="hero-title-btn">Nachrichten werden geladen ...</div>
+          <p class="hero-body" id="hero-body-text">Aktuelle Meldungen aus deutschen und europaeischen Quellen werden abgerufen.</p>
+        </div>
+        <div class="ornament">&#8212; &#10022; &#8212;</div>
+        <div class="cat-bar" id="cat-bar">
+          <button class="cat-btn active" data-cat="alle">Alle</button>
+          <button class="cat-btn" data-cat="innen">Innenpolitik</button>
+          <button class="cat-btn" data-cat="aussen">Aussenpolitik</button>
+          <button class="cat-btn" data-cat="eu">Europa</button>
+          <button class="cat-btn" data-cat="wirt">Wirtschaft</button>
+        </div>
+        <div id="news-list"></div>
+      </div>
+      <div class="news-side">
+        <div class="side-hdr"><div class="section-label" style="margin-bottom:0">Top-Quellen</div></div>
+        <div id="side-list"></div>
+      </div>
+    </div>
+    <div class="card-row" id="card-row"></div>
+  </div>
+</div>
+<div id="page-sources" class="page">
+  <div class="wrap">
+    <div class="section-label">Freie Online-Quellen</div>
+    <p class="intro-text">Alle Quellen sind kostenlos oder bieten umfangreiche Gratisangebote. Klicke auf eine Karte - Seite oeffnet in der App.</p>
+    <div class="filter-bar" id="src-filter-bar"></div>
+    <div class="sources-grid" id="sources-grid"></div>
+  </div>
+</div>
+<div id="page-edu" class="page">
+  <div class="wrap">
+    <div class="section-label">Weiterbildungswege - 6 Lernpfade</div>
+    <p class="intro-text">Strukturierte Lernpfade von der Grundbildung bis zum akademischen Niveau. Alle Links oeffnen sich direkt in der App.</p>
+    <div class="edu-grid" id="edu-grid"></div>
+  </div>
+</div>
+<div id="page-ai" class="page">
+  <div class="wrap">
+    <div class="section-label">Politisches Lexikon</div>
+    <div class="ai-box">
+      <div class="ai-label"><span class="blink-dot"></span>Politisches Woerterbuch &middot; Offline verfuegbar &middot; Sofort durchsuchbar</div>
+      <div class="lex-toolbar">
+        <input id="lex-search" type="text" placeholder="Begriff, Kategorie oder Stichwort suchen ...">
+        <button id="lex-add-btn" class="lex-add-trigger">+ Begriff hinzufuegen</button>
+      </div>
+      <div id="lex-cat-bar"></div>
+    </div>
+
+    <!-- Formular: neuer Begriff -->
+    <div id="lex-form-wrap" class="lex-form-wrap" style="display:none">
+      <div class="lex-form-header">
+        <span class="section-label" style="margin-bottom:0">Neuen Eintrag anlegen</span>
+        <button id="lex-form-close" class="lex-form-x">&times;</button>
+      </div>
+      <div class="lex-form-grid">
+        <div class="lex-form-field">
+          <label class="lex-form-label">Begriff *</label>
+          <input id="lf-term" type="text" class="lex-form-input" placeholder="z.B. Subsidiaritaet">
+        </div>
+        <div class="lex-form-field">
+          <label class="lex-form-label">Kategorie *</label>
+          <div class="lex-cat-row">
+            <select id="lf-cat-select" class="lex-form-input">
+              <option value="">— Kategorie waehlen —</option>
+              <option value="__new__">+ Neue Kategorie erstellen ...</option>
+            </select>
+            <input id="lf-cat-new" type="text" class="lex-form-input" placeholder="Neue Kategorie eingeben" style="display:none">
+          </div>
+        </div>
+        <div class="lex-form-field lex-form-full">
+          <label class="lex-form-label">Definition *</label>
+          <textarea id="lf-def" class="lex-form-input lex-form-textarea" placeholder="Erklaerung des Begriffs in 1–3 Saetzen ..."></textarea>
+        </div>
+      </div>
+      <div class="lex-form-actions">
+        <span id="lf-msg" class="lf-msg"></span>
+        <button id="lf-save" class="lex-save-btn">Eintrag speichern</button>
+      </div>
+    </div>
+
+    <div id="lex-stats" class="lex-stats"></div>
+    <div id="lex-grid"></div>
+  </div>
+</div>
+<div id="site-footer">
+  <div class="footer-logo">P<em>O</em>LIS</div>
+  <div class="footer-sub">Die freie politische Tageszeitung Deutschlands &middot; Kein Bezahlinhalt &middot; Bildung zuerst<br>Stand Februar 2026</div>
+  <div class="footer-links" id="footer-links"></div>
+</div>
+<script>
+var SOURCES=[{name:"Tagesschau",flag:"\ud83c\udde9\ud83c\uddea",tag:"Oeffentlich-rechtlich",free:true,desc:"ARDs Hauptnachrichtenredaktion - Politikberichterstattung und Hintergruende. 100% kostenlos.",url:"https://www.tagesschau.de/politik",domain:"tagesschau.de"},{name:"ZDF Nachrichten",flag:"\ud83c\udde9\ud83c\uddea",tag:"Oeffentlich-rechtlich",free:true,desc:"ZDF bietet Politikanalysen und Magazine wie heute journal kostenlos online.",url:"https://www.zdf.de/nachrichten/politik",domain:"zdf.de"},{name:"Deutschlandfunk",flag:"\ud83c\udde9\ud83c\uddea",tag:"Oeffentlich-rechtlich",free:true,desc:"Hintergrundjournalismus auf hoechstem Niveau. Stark bei Aussenpolitik.",url:"https://www.deutschlandfunk.de/nachrichten/politik",domain:"deutschlandfunk.de"},{name:"Bundestag.de",flag:"\ud83c\udde9\ud83c\uddea",tag:"Primaerquelle",free:true,desc:"Offizielle Seite des Deutschen Bundestages. Tagesordnungen, Plenarprotokolle.",url:"https://www.bundestag.de/aktuelles",domain:"bundestag.de"},{name:"Bundesregierung",flag:"\ud83c\udde9\ud83c\uddea",tag:"Primaerquelle",free:true,desc:"Pressemitteilungen, Gesetzentwuerfe und Regierungsberichte direkt von der Bundesregierung.",url:"https://www.bundesregierung.de/breg-de/aktuelles",domain:"bundesregierung.de"},{name:"Bundesverfassungsgericht",flag:"\ud83c\udde9\ud83c\uddea",tag:"Primaerquelle",free:true,desc:"Alle Entscheidungen und Pressemitteilungen des BVerfG.",url:"https://www.bundesverfassungsgericht.de/DE/Presse/presse_node.html",domain:"bundesverfassungsgericht.de"},{name:"Zeit Online",flag:"\ud83c\udde9\ud83c\uddea",tag:"Qualitaetsmedium",free:false,desc:"Grosse Teile des ZEIT-Politikressorts kostenlos. Tiefgehende Analysen.",url:"https://www.zeit.de/politik",domain:"zeit.de"},{name:"Spiegel Politik",flag:"\ud83c\udde9\ud83c\uddea",tag:"Qualitaetsmedium",free:false,desc:"DER SPIEGEL bietet viele freie Politikartikel. Starke Investigativrecherche.",url:"https://www.spiegel.de/politik",domain:"spiegel.de"},{name:"Sueddeutsche Zeitung",flag:"\ud83c\udde9\ud83c\uddea",tag:"Qualitaetsmedium",free:false,desc:"Ausgewaehlte SZ-Artikel frei. Bekannt fuer Investigativjournalismus.",url:"https://www.sueddeutsche.de/politik",domain:"sueddeutsche.de"},{name:"FAZ Politik",flag:"\ud83c\udde9\ud83c\uddea",tag:"Qualitaetsmedium",free:false,desc:"Frankfurter Allgemeine Zeitung - hohe Standards, starke Aussenpolitikberichterstattung.",url:"https://www.faz.net/aktuell/politik",domain:"faz.net"},{name:"Verfassungsblog",flag:"\ud83c\udde9\ud83c\uddea",tag:"Wissenschaft",free:true,desc:"Wissenschaftliches Blog zu Verfassungs- und Europarecht. Fachanalysen - kostenlos.",url:"https://verfassungsblog.de",domain:"verfassungsblog.de"},{name:"bpb.de",flag:"\ud83c\udde9\ud83c\uddea",tag:"Politische Bildung",free:true,desc:"Bundeszentrale fuer politische Bildung - wichtigste Wissensquelle fuer politische Bildung.",url:"https://www.bpb.de",domain:"bpb.de"},{name:"Abgeordnetenwatch",flag:"\ud83c\udde9\ud83c\uddea",tag:"Transparenz",free:true,desc:"Transparenzplattform fuer den Bundestag: Abstimmungsverhalten und Nebeneinku\u00fcnfte.",url:"https://www.abgeordnetenwatch.de",domain:"abgeordnetenwatch.de"},{name:"DGAP",flag:"\ud83c\udde9\ud83c\uddea",tag:"Think Tank",free:true,desc:"Deutsche Gesellschaft fuer Auswaertige Politik - Analysen zu Aussen- und Sicherheitspolitik.",url:"https://dgap.org/de",domain:"dgap.org"},{name:"Euronews DE",flag:"\ud83c\uddea\ud83c\uddfa",tag:"Europa",free:true,desc:"Europaeische Nachrichten aus dem EU-Raum. Klarer Europafokus, vollstaendig kostenlos.",url:"https://de.euronews.com/politik",domain:"euronews.com"},{name:"EU-Parlament News",flag:"\ud83c\uddea\ud83c\uddfa",tag:"EU Primaerquelle",free:true,desc:"Offizielle Nachrichten des Europaeischen Parlaments.",url:"https://www.europarl.europa.eu/news/de",domain:"europarl.europa.eu"},{name:"Politico Europe",flag:"\ud83c\uddea\ud83c\uddfa",tag:"International",free:false,desc:"Fuehrendes Medium zu europaeischer Politik. Viele Artikel kostenlos.",url:"https://www.politico.eu",domain:"politico.eu"},{name:"Deutsche Welle",flag:"\ud83c\udf0d",tag:"International",free:true,desc:"Weltberichterstattung auf Deutsch und Englisch, 100% kostenlos.",url:"https://www.dw.com/de/themen/politik/s-12090",domain:"dw.com"},{name:"BBC News Politics",flag:"\ud83c\uddec\ud83c\udde7",tag:"International",free:true,desc:"BBC-Politikberichterstattung zu UK, Europa und Weltpolitik. Vollstaendig kostenlos.",url:"https://www.bbc.com/news/politics",domain:"bbc.com"},{name:"Le Monde Diplomatique",flag:"\ud83c\uddeb\ud83c\uddf7",tag:"Geopolitik",free:false,desc:"Tiefgehende geopolitische Analysen. Deutsche Ausgabe verfuegbar.",url:"https://monde-diplomatique.de",domain:"monde-diplomatique.de"}];
+var NEWS=[{cats:["alle","innen"],title:"Koalitionsverhandlungen 2026: Wer regiert Deutschland als naechstes?",src:"Tagesschau",url:"https://www.tagesschau.de/politik",text:"Nach der Bundestagswahl 2025 ringen die Parteien um eine Koalition. Die Weichenstellungen der naechsten Wochen bestimmen vier Jahre deutsche Politik.",cat:"Innenpolitik",date:"18. Feb 2026"},{cats:["alle","aussen"],title:"Transatlantische Spannungen: Deutschland zwischen Washington und Bruessel",src:"Spiegel",url:"https://www.spiegel.de/politik/ausland",text:"Die veraenderte Haltung der USA zur NATO stellt die deutsche Aussenpolitik vor neue Herausforderungen.",cat:"Aussenpolitik",date:"18. Feb 2026"},{cats:["alle","eu"],title:"EU-Parlament: Neues Digitalmarktgesetz reguliert Tech-Giganten",src:"EU-Parlament",url:"https://www.europarl.europa.eu/news/de",text:"Das Europaeische Parlament hat neue Regulierungen fuer Digitalkonzerne verabschiedet.",cat:"Europa",date:"17. Feb 2026"},{cats:["alle","wirt"],title:"Rentenreform 2026: Das Generationenkapital - was steckt dahinter?",src:"Deutschlandfunk",url:"https://www.deutschlandfunk.de/nachrichten/wirtschaft",text:"Das geplante Generationenkapital soll die gesetzliche Rente stabilisieren. Oekonomen streiten ueber Wirksamkeit und Risiken.",cat:"Wirtschaft & Soziales",date:"17. Feb 2026"},{cats:["alle","innen"],title:"Bundesverfassungsgericht prueft die Wahlrechtsreform",src:"Bundestag.de",url:"https://www.bundestag.de/aktuelles",text:"Das BVerfG verhandelt die Verfassungsmaessigkeit der Wahlrechtsreform. Das Urteil koennte weitreichende Folgen haben.",cat:"Innenpolitik",date:"16. Feb 2026"},{cats:["alle","aussen"],title:"Ukraine-Friedensgespraeche: Deutschlands Rolle als Vermittler",src:"ZDF",url:"https://www.zdf.de/nachrichten/politik",text:"Internationale Vermittlungsbemuehungen nehmen Fahrt auf. Berlin steht vor der Frage: Wie viel Druck auf Kiew, wie viel auf Moskau?",cat:"Aussenpolitik",date:"16. Feb 2026"},{cats:["alle","eu"],title:"EU-Erweiterung: Neue Beitrittsperspektiven fuer den Westbalkan",src:"Euronews DE",url:"https://de.euronews.com/politik",text:"Die EU gibt Westbalkan-Staaten neue Beitrittsperspektiven. Welche Reformen sind noetig?",cat:"Europa",date:"15. Feb 2026"},{cats:["alle","wirt"],title:"Fachkraeftemangel: Kann ein modernes Einwanderungsrecht helfen?",src:"FAZ",url:"https://www.faz.net/aktuell/politik",text:"Deutschland braucht Fachkraefte aus dem Ausland, gleichzeitig streiten Parteien ueber Migrationsbegrenzung.",cat:"Wirtschaft & Soziales",date:"15. Feb 2026"}];
+var SIDE_SOURCES=[["01","Bundestag: Plenarsitzungen & Beschluesse","bundestag.de","https://www.bundestag.de/aktuelles","Bundestag.de"],["02","Tagesschau: Politiknachrichten live","tagesschau.de","https://www.tagesschau.de/politik","Tagesschau"],["03","EU-Parlament: Nachrichten aus Bruessel","europarl.europa.eu","https://www.europarl.europa.eu/news/de","EU-Parlament"],["04","Abgeordnetenwatch: Transparenz","abgeordnetenwatch.de","https://www.abgeordnetenwatch.de","Abgeordnetenwatch"],["05","bpb: Politisches Hintergrundwissen","bpb.de","https://www.bpb.de","bpb.de"],["06","Verfassungsblog: Rechtliche Analysen","verfassungsblog.de","https://verfassungsblog.de","Verfassungsblog"],["07","Politico Europe: Bruessel & Berlin","politico.eu","https://www.politico.eu","Politico Europe"],["08","Deutsche Welle: Weltpolitik","dw.com","https://www.dw.com/de/themen/politik/s-12090","Deutsche Welle"]];
+var MINI_CARDS=[{meta:"bundesregierung.de",title:"Pressemitteilungen der Bundesregierung",body:"Alle Gesetzentw\u00fcrfe direkt von der Bundesregierung. Wichtigste Primaerquelle.",url:"https://www.bundesregierung.de/breg-de/aktuelles",name:"Bundesregierung"},{meta:"dgap.org",title:"DGAP: Analysen zur deutschen Aussenpolitik",body:"Fundierte Analysen der Deutschen Gesellschaft fuer Auswaertige Politik - kostenlos.",url:"https://dgap.org/de",name:"DGAP"},{meta:"bpb.de",title:"bpb: Dossiers & Hintergrundanalysen",body:"Tiefgehende Hintergrundinformationen zu allen politischen Themen.",url:"https://www.bpb.de/themen/politisches-system/",name:"bpb"}];
+var EDU=[{level:"Einsteiger",title:"Politische Grundbildung",color:"#1a3a6b",emoji:"\ud83c\udfdb\ufe0f",steps:["Das Grundgesetz lesen und verstehen","Wie funktioniert Demokratie? Parlament, Gewaltenteilung, Wahlen","Das politische System: Bund, Laender, Gemeinden","Wahl-O-Mat nutzen und Parteiprogramme vergleichen"],links:[["bpb - Politiklexikon","https://www.bpb.de/kurz-knapp/lexika/das-junge-politik-lexikon/"],["Wahl-O-Mat","https://www.wahl-o-mat.de"],["bpb - Grundgesetz","https://www.bpb.de/themen/recht-und-justiz/grundgesetz/"],["bpb.de","https://www.bpb.de"]]},{level:"Fortgeschrittene",title:"Parlamentarismus & Institutionen",color:"#c8102e",emoji:"\ud83d\uddf3\ufe0f",steps:["Bundestag: Ausschuesse, Fraktionen, Debatten","Bundesrat, Vermittlungsausschuss und Foederalismus","EU-Parlament und EU-Kommission: Wer entscheidet was?","Das Gesetzgebungsverfahren von der Initiative bis zur Verkuendung"],links:[["Bundestag - Bildung","https://www.bundestag.de/besuche/bildung"],["EU-Lernplattform","https://learning.europa.eu/de"],["bpb - Politisches System","https://www.bpb.de/themen/politisches-system/"],["Abgeordnetenwatch","https://www.abgeordnetenwatch.de"]]},{level:"Vertiefung",title:"Internationale Politik & Geopolitik",color:"#2d6a4f",emoji:"\ud83c\udf0d",steps:["Grundlagen der Aussenpolitik: Interessen, Diplomatie","UN, NATO, WTO, IWF, Weltbank: Aufgaben und Kritik","Aktuelle Konflikte geopolitisch einordnen","Aussenpolitische Theorieschulen: Realismus, Liberalismus"],links:[["DGAP - Aussenpolitik","https://dgap.org/de"],["bpb - Aussenpolitik","https://www.bpb.de/themen/aussenpolitik/"],["UN auf Deutsch","https://www.uno.de"],["bpb - Sicherheit","https://www.bpb.de/themen/sicherheit/"]]},{level:"Akademisch",title:"Politikwissenschaft & Studium",color:"#5c3317",emoji:"\ud83d\udcda",steps:["Einfuehrung in Politikwissenschaft via MOOC","Politische Theorie: Rawls, Habermas, Arendt","Komparative Politikwissenschaft: Systeme im Vergleich","Wissenschaftliche Zeitschriften: JSTOR Free Access"],links:[["Coursera - Political Science","https://www.coursera.org/search?query=political+science"],["OpenLearn","https://www.open.edu/openlearn/politics-policy-people/politics"],["JSTOR - Free Access","https://www.jstor.org"],["Verfassungsblog","https://verfassungsblog.de"]]},{level:"Praxis & Karriere",title:"Politisch Aktiv werden",color:"#4a148c",emoji:"\u270a",steps:["Parteiarbeit: Lokal einsteigen, Ortsvereine kennenlernen","Praktikum beim Bundestag oder Ministerien","Civic-Tech: Petitionen, Liquid Democracy","NGOs, Stiftungen und Think Tanks"],links:[["Bundestag - Praktikum","https://www.bundestag.de/besuche/praktikum"],["Abgeordnetenwatch","https://www.abgeordnetenwatch.de"],["Bundesfreiwilligendienst","https://www.bundesfreiwilligendienst.de"],["Stiftung Mercator","https://www.stiftung-mercator.de"]]},{level:"Taeglich lernen",title:"Podcasts, Videos & Medien",color:"#bf360c",emoji:"\ud83c\udfa4",steps:["Podcast: Lage der Nation - woechentliche Tiefenanalyse","YouTube: MrWissen2go Politik - fundiert und aktuell","Podcast: 11KM - der tagesschau-Podcast","YouTube-Kanal des Bundestages und bpb-Mediathek"],links:[["Lage der Nation","https://lagedernation.org"],["MrWissen2go YouTube","https://www.youtube.com/@MrWissen2go"],["bpb Mediathek","https://www.bpb.de/mediathek/"],["Bundestag YouTube","https://www.youtube.com/@Bundestag"]]}];
+var TICKER_TEXTS=["\ud83d\udcf0 Koalitionsverhandlungen 2026 - neue Regierung in Sicht","\ud83c\udf0d NATO-Aussenminister beraten ueber Sicherheitsarchitektur","\ud83c\udffb\ufe0f EU-Parlament stimmt ueber Digitalmarktgesetz ab","\u2696\ufe0f BVerfG: Urteil zur Wahlrechtsreform erwartet","\ud83d\udcca Neue Umfragen: Parteienstaerke bundesweit veroeffentlicht","\ud83d\udcb6 EZB diskutiert Zinspolitik fuer Q2 2026","\ud83c\udf3f Klimaschutzgesetz: Neue 2030-Ziele in der Debatte","\ud83d\udd12 Cybersicherheitsgesetz: BSI erhaelt erweiterte Befugnisse","\ud83c\udf10 Aussenminister reist zu Friedensgespraechen nach Genf"];
+var SOURCES=[{name:"Tagesschau",flag:"🇩🇪",tag:"Oeffentlich-rechtlich",free:true,desc:"ARDs Hauptnachrichtenredaktion. 100% kostenlos.",url:"https://www.tagesschau.de/politik",domain:"tagesschau.de"},{name:"ZDF Nachrichten",flag:"🇩🇪",tag:"Oeffentlich-rechtlich",free:true,desc:"ZDF bietet Politikanalysen und Magazine kostenlos online.",url:"https://www.zdf.de/nachrichten/politik",domain:"zdf.de"},{name:"Deutschlandfunk",flag:"🇩🇪",tag:"Oeffentlich-rechtlich",free:true,desc:"Hintergrundjournalismus auf hoechstem Niveau.",url:"https://www.deutschlandfunk.de/nachrichten/politik",domain:"deutschlandfunk.de"},{name:"Bundestag.de",flag:"🇩🇪",tag:"Primaerquelle",free:true,desc:"Offizielle Seite des Deutschen Bundestages.",url:"https://www.bundestag.de/aktuelles",domain:"bundestag.de"},{name:"Bundesregierung",flag:"🇩🇪",tag:"Primaerquelle",free:true,desc:"Pressemitteilungen und Gesetzentwuerfe direkt von der Bundesregierung.",url:"https://www.bundesregierung.de/breg-de/aktuelles",domain:"bundesregierung.de"},{name:"Bundesverfassungsgericht",flag:"🇩🇪",tag:"Primaerquelle",free:true,desc:"Alle Entscheidungen und Pressemitteilungen des BVerfG.",url:"https://www.bundesverfassungsgericht.de/DE/Presse/presse_node.html",domain:"bundesverfassungsgericht.de"},{name:"Zeit Online",flag:"🇩🇪",tag:"Qualitaetsmedium",free:false,desc:"Grosse Teile des ZEIT-Politikressorts kostenlos.",url:"https://www.zeit.de/politik",domain:"zeit.de"},{name:"Spiegel Politik",flag:"🇩🇪",tag:"Qualitaetsmedium",free:false,desc:"Viele freie Politikartikel. Starke Investigativrecherche.",url:"https://www.spiegel.de/politik",domain:"spiegel.de"},{name:"Sueddeutsche Zeitung",flag:"🇩🇪",tag:"Qualitaetsmedium",free:false,desc:"Ausgewaehlte SZ-Artikel frei. Panama Papers u.a.",url:"https://www.sueddeutsche.de/politik",domain:"sueddeutsche.de"},{name:"FAZ Politik",flag:"🇩🇪",tag:"Qualitaetsmedium",free:false,desc:"Hohe Standards, starke Aussenpolitikberichterstattung.",url:"https://www.faz.net/aktuell/politik",domain:"faz.net"},{name:"Verfassungsblog",flag:"🇩🇪",tag:"Wissenschaft",free:true,desc:"Wissenschaftliches Blog zu Verfassungs- und Europarecht.",url:"https://verfassungsblog.de",domain:"verfassungsblog.de"},{name:"bpb.de",flag:"🇩🇪",tag:"Politische Bildung",free:true,desc:"Bundeszentrale fuer politische Bildung.",url:"https://www.bpb.de",domain:"bpb.de"},{name:"Abgeordnetenwatch",flag:"🇩🇪",tag:"Transparenz",free:true,desc:"Abstimmungsverhalten und Nebeneinkunfte.",url:"https://www.abgeordnetenwatch.de",domain:"abgeordnetenwatch.de"},{name:"DGAP",flag:"🇩🇪",tag:"Think Tank",free:true,desc:"Deutsche Gesellschaft fuer Auswaertige Politik.",url:"https://dgap.org/de",domain:"dgap.org"},{name:"Euronews DE",flag:"🇪🇺",tag:"Europa",free:true,desc:"Europaeische Nachrichten, vollstaendig kostenlos.",url:"https://de.euronews.com/politik",domain:"euronews.com"},{name:"EU-Parlament News",flag:"🇪🇺",tag:"EU Primaerquelle",free:true,desc:"Offizielle Nachrichten des Europaeischen Parlaments.",url:"https://www.europarl.europa.eu/news/de",domain:"europarl.europa.eu"},{name:"Politico Europe",flag:"🇪🇺",tag:"International",free:false,desc:"Fuehrendes Medium zu europaeischer Politik.",url:"https://www.politico.eu",domain:"politico.eu"},{name:"Deutsche Welle",flag:"🌍",tag:"International",free:true,desc:"Weltberichterstattung auf Deutsch und Englisch, kostenlos.",url:"https://www.dw.com/de/themen/politik/s-12090",domain:"dw.com"},{name:"BBC News Politics",flag:"🇬🇧",tag:"International",free:true,desc:"BBC-Politikberichterstattung, vollstaendig kostenlos.",url:"https://www.bbc.com/news/politics",domain:"bbc.com"},{name:"Le Monde Diplomatique",flag:"🇫🇷",tag:"Geopolitik",free:false,desc:"Tiefgehende geopolitische Analysen.",url:"https://monde-diplomatique.de",domain:"monde-diplomatique.de"}];
+var NEWS=[{cats:["alle","innen"],title:"Koalitionsverhandlungen 2026: Wer regiert Deutschland als naechstes?",src:"Tagesschau",url:"https://www.tagesschau.de/politik",text:"Nach der Bundestagswahl 2025 ringen die Parteien um eine Koalition.",cat:"Innenpolitik",date:"18. Feb 2026"},{cats:["alle","aussen"],title:"Transatlantische Spannungen: Deutschland zwischen Washington und Bruessel",src:"Spiegel",url:"https://www.spiegel.de/politik/ausland",text:"Die veraenderte Haltung der USA zur NATO stellt die deutsche Aussenpolitik vor Herausforderungen.",cat:"Aussenpolitik",date:"18. Feb 2026"},{cats:["alle","eu"],title:"EU-Parlament: Neues Digitalmarktgesetz reguliert Tech-Giganten",src:"EU-Parlament",url:"https://www.europarl.europa.eu/news/de",text:"Das Europaeische Parlament hat neue Regulierungen fuer Digitalkonzerne verabschiedet.",cat:"Europa",date:"17. Feb 2026"},{cats:["alle","wirt"],title:"Rentenreform 2026: Das Generationenkapital",src:"Deutschlandfunk",url:"https://www.deutschlandfunk.de/nachrichten/wirtschaft",text:"Das geplante Generationenkapital soll die gesetzliche Rente stabilisieren.",cat:"Wirtschaft",date:"17. Feb 2026"},{cats:["alle","innen"],title:"Bundesverfassungsgericht prueft die Wahlrechtsreform",src:"Bundestag.de",url:"https://www.bundestag.de/aktuelles",text:"Das BVerfG verhandelt die Verfassungsmaessigkeit der Wahlrechtsreform.",cat:"Innenpolitik",date:"16. Feb 2026"},{cats:["alle","aussen"],title:"Ukraine-Friedensgespraeche: Deutschlands Rolle als Vermittler",src:"ZDF",url:"https://www.zdf.de/nachrichten/politik",text:"Internationale Vermittlungsbemuehungen nehmen Fahrt auf.",cat:"Aussenpolitik",date:"16. Feb 2026"},{cats:["alle","eu"],title:"EU-Erweiterung: Neue Beitrittsperspektiven fuer den Westbalkan",src:"Euronews DE",url:"https://de.euronews.com/politik",text:"Die EU gibt Westbalkan-Staaten neue Beitrittsperspektiven.",cat:"Europa",date:"15. Feb 2026"},{cats:["alle","wirt"],title:"Fachkraeftemangel: Kann ein modernes Einwanderungsrecht helfen?",src:"FAZ",url:"https://www.faz.net/aktuell/politik",text:"Deutschland braucht Fachkraefte, streitet aber ueber Migrationsbegrenzung.",cat:"Wirtschaft",date:"15. Feb 2026"}];
+var SIDE_SOURCES=[["01","Bundestag: Plenarsitzungen","bundestag.de","https://www.bundestag.de/aktuelles","Bundestag.de"],["02","Tagesschau: Politiknachrichten","tagesschau.de","https://www.tagesschau.de/politik","Tagesschau"],["03","EU-Parlament: Nachrichten","europarl.europa.eu","https://www.europarl.europa.eu/news/de","EU-Parlament"],["04","Abgeordnetenwatch","abgeordnetenwatch.de","https://www.abgeordnetenwatch.de","Abgeordnetenwatch"],["05","bpb: Hintergrundwissen","bpb.de","https://www.bpb.de","bpb.de"],["06","Verfassungsblog","verfassungsblog.de","https://verfassungsblog.de","Verfassungsblog"],["07","Politico Europe","politico.eu","https://www.politico.eu","Politico Europe"],["08","Deutsche Welle","dw.com","https://www.dw.com/de/themen/politik/s-12090","Deutsche Welle"]];
+var MINI_CARDS=[{meta:"bundesregierung.de",title:"Pressemitteilungen der Bundesregierung",body:"Alle Gesetzentwuerfe direkt von der Bundesregierung.",url:"https://www.bundesregierung.de/breg-de/aktuelles",name:"Bundesregierung"},{meta:"dgap.org",title:"DGAP: Analysen zur deutschen Aussenpolitik",body:"Fundierte Analysen der Deutschen Gesellschaft fuer Auswaertige Politik.",url:"https://dgap.org/de",name:"DGAP"},{meta:"bpb.de",title:"bpb: Dossiers & Hintergrundanalysen",body:"Tiefgehende Hintergrundinformationen zu allen politischen Themen.",url:"https://www.bpb.de/themen/politisches-system/",name:"bpb"}];
+var EDU=[{level:"Einsteiger",title:"Politische Grundbildung",color:"#1a3a6b",emoji:"🏛️",steps:["Das Grundgesetz lesen und verstehen","Demokratie-Grundbegriffe: Parlament, Gewaltenteilung, Wahlen","Das politische System: Bund, Laender, Gemeinden","Wahl-O-Mat nutzen und Parteiprogramme vergleichen"],links:[["bpb - Politiklexikon","https://www.bpb.de/kurz-knapp/lexika/das-junge-politik-lexikon/"],["Wahl-O-Mat","https://www.wahl-o-mat.de"],["bpb - Grundgesetz","https://www.bpb.de/themen/recht-und-justiz/grundgesetz/"],["bpb.de","https://www.bpb.de"]]},{level:"Fortgeschrittene",title:"Parlamentarismus & Institutionen",color:"#c8102e",emoji:"🗳️",steps:["Bundestag: Ausschuesse, Fraktionen, Debatten","Bundesrat, Vermittlungsausschuss und Foederalismus","EU-Parlament und EU-Kommission","Das Gesetzgebungsverfahren Schritt fuer Schritt"],links:[["Bundestag - Bildung","https://www.bundestag.de/besuche/bildung"],["EU-Lernplattform","https://learning.europa.eu/de"],["bpb - Politisches System","https://www.bpb.de/themen/politisches-system/"],["Abgeordnetenwatch","https://www.abgeordnetenwatch.de"]]},{level:"Vertiefung",title:"Internationale Politik & Geopolitik",color:"#2d6a4f",emoji:"🌍",steps:["Grundlagen der Aussenpolitik","UN, NATO, WTO, IWF, Weltbank","Aktuelle Konflikte geopolitisch einordnen","Aussenpolitische Theorieschulen"],links:[["DGAP - Aussenpolitik","https://dgap.org/de"],["bpb - Aussenpolitik","https://www.bpb.de/themen/aussenpolitik/"],["UN auf Deutsch","https://www.uno.de"],["bpb - Sicherheit","https://www.bpb.de/themen/sicherheit/"]]},{level:"Akademisch",title:"Politikwissenschaft & Studium",color:"#5c3317",emoji:"📚",steps:["Politikwissenschaft via MOOC","Politische Theorie: Rawls, Habermas, Arendt","Komparative Politikwissenschaft","JSTOR Free Access"],links:[["Coursera","https://www.coursera.org/search?query=political+science"],["OpenLearn","https://www.open.edu/openlearn/politics-policy-people/politics"],["JSTOR","https://www.jstor.org"],["Verfassungsblog","https://verfassungsblog.de"]]},{level:"Praxis",title:"Politisch Aktiv werden",color:"#4a148c",emoji:"✊",steps:["Parteiarbeit: Lokal einsteigen","Praktikum beim Bundestag oder Ministerien","Civic-Tech: Petitionen, digitale Beteiligung","NGOs, Stiftungen und Think Tanks"],links:[["Bundestag - Praktikum","https://www.bundestag.de/besuche/praktikum"],["Abgeordnetenwatch","https://www.abgeordnetenwatch.de"],["Bundesfreiwilligendienst","https://www.bundesfreiwilligendienst.de"],["Stiftung Mercator","https://www.stiftung-mercator.de"]]},{level:"Taeglich",title:"Podcasts, Videos & Medien",color:"#bf360c",emoji:"🎙️",steps:["Podcast: Lage der Nation","YouTube: MrWissen2go Politik","Podcast: 11KM - tagesschau","bpb-Mediathek und Bundestag YouTube"],links:[["Lage der Nation","https://lagedernation.org"],["MrWissen2go YouTube","https://www.youtube.com/@MrWissen2go"],["bpb Mediathek","https://www.bpb.de/mediathek/"],["Bundestag YouTube","https://www.youtube.com/@Bundestag"]]}];
+var TICKER_TEXTS=["📰 Koalitionsverhandlungen 2026 - neue Regierung in Sicht","🌍 NATO-Aussenminister beraten ueber Sicherheitsarchitektur","🏛️ EU-Parlament stimmt ueber Digitalmarktgesetz ab","⚖️ BVerfG: Urteil zur Wahlrechtsreform erwartet","📊 Neue Umfragen veroeffentlicht","💶 EZB diskutiert Zinspolitik fuer Q2 2026","🌿 Klimaschutzgesetz: Neue 2030-Ziele","🔒 Cybersicherheitsgesetz: BSI erhaelt erweiterte Befugnisse"];
+var FOOTER_LINKS=[["bpb.de","https://www.bpb.de"],["Bundestag","https://www.bundestag.de"],["Tagesschau","https://www.tagesschau.de/politik"],["EU-Parlament","https://www.europarl.europa.eu/news/de"],["DGAP","https://dgap.org/de"],["Verfassungsblog","https://verfassungsblog.de"]];
+var SRC_CATS=["alle","Oeffentlich-rechtlich","Primaerquelle","Qualitaetsmedium","Europa","EU Primaerquelle","International","Politische Bildung","Transparenz","Wissenschaft","Think Tank","Geopolitik"];
+var LEXIKON=[
+  {term:"Abstimmung",cat:"Parlament",def:"Formelle Entscheidung im Bundestag durch Handzeichen, Hammelsprung oder namentliche Abstimmung. Einfache Mehrheit genuegt fuer normale Gesetze; Zwei-Drittel-Mehrheit fuer Verfassungsaenderungen."},
+  {term:"Bundesrat",cat:"Institution",def:"Verfassungsorgan, das die 16 Bundeslaender vertreet. Wirkt bei der Gesetzgebung mit; bei zustimmungspflichtigen Gesetzen hat er ein echtes Vetorecht. Zusammensetzung: 3-6 Stimmen je nach Laendergroesse."},
+  {term:"Bundestag",cat:"Institution",def:"Das direkt gewahlte Parlament mit rund 700 Abgeordneten. Verabschiedet Gesetze, waehlt den Bundeskanzler und kontrolliert die Bundesregierung. Wahlperiode: 4 Jahre."},
+  {term:"Checks and Balances",cat:"Staatsrecht",def:"Gegenseitige Kontrolle staatlicher Gewalten. In Deutschland kontrolliert das BVerfG die Legislative und Exekutive; der Bundesrat hemmt die Bundespolitik; Gerichte sind unabhaengig."},
+  {term:"Demokratie",cat:"Grundbegriff",def:"Herrschaftsform, in der das Volk die Staatsgewalt ausuebt. Deutschland ist eine parlamentarische Demokratie: Buerger waehlen Vertreter, die stellvertretend entscheiden (Art. 20 GG)."},
+  {term:"Föderalismus",cat:"Staatsaufbau",def:"Staatsaufbau aus Bund und Laendern mit je eigenen Kompetenzen. Laender regeln Bildung, Polizei und Kultur eigenstaendig. Gesichert durch das Grundgesetz als unabanderbares Prinzip."},
+  {term:"Fraktion",cat:"Parlament",def:"Zusammenschluss von Abgeordneten im Bundestag. Mindestgroesse: 5% der Abgeordneten. Fraktionen erhalten Finanzmittel, Bueros und Redezeit fuer politische Arbeit."},
+  {term:"Gewaltenteilung",cat:"Staatsrecht",def:"Aufteilung der Staatsgewalt in Legislative (Gesetzgebung), Exekutive (Regierung) und Judikative (Gerichte). Verhindert Machtmissbrauch; zentrales Prinzip des Grundgesetzes."},
+  {term:"Grundgesetz",cat:"Verfassung",def:"Die Verfassung der Bundesrepublik, in Kraft seit 1949. Enthaelt Grundrechte (Art. 1-19) und regelt den Staatsaufbau. Die Menschenwuerde (Art. 1) ist unabenderbar."},
+  {term:"Koalition",cat:"Regierung",def:"Buendnis mehrerer Parteien zur Regierungsbildung, wenn eine Partei keine Mehrheit hat. Grundlage ist ein Koalitionsvertrag. Beispiele: Grosse Koalition, Ampelkoalition, Schwarz-Gruen."},
+  {term:"Koalitionsvertrag",cat:"Regierung",def:"Schriftliche Vereinbarung der Koalitionsparteien ueber gemeinsame Regierungsziele und Ministerienverteilung. Kein Gesetz, aber politisch bindend fuer die Regierungszeit."},
+  {term:"Konstruktives Misstrauensvotum",cat:"Staatsrecht",def:"Einzige Moeglichkeit im GG, den Bundeskanzler abzuloesen: Bundestag muss gleichzeitig einen Nachfolger waehlen. Bisher nur zweimal angewandt (1972, 1982)."},
+  {term:"Lobbying",cat:"Politik",def:"Interessenvertretung gegenueber Politikern durch Unternehmen, Verbaende oder NGOs. Seit 2022 in Deutschland gesetzlich durch das Lobbyregister reguliert und transparent gemacht."},
+  {term:"Minderheitsregierung",cat:"Regierung",def:"Regierung ohne Parlamentsmehrheit. Muss fuer jedes Gesetz wechselnde Mehrheiten suchen. In Deutschland selten und instabil; gilt als Zeichen politischer Krise."},
+  {term:"NATO",cat:"International",def:"Nordatlantisches Verteidigungsbuendnis, 1949 gegruendet, heute 32 Mitglieder. Kernprinzip: Art. 5 Beistandspflicht. Deutschland ist seit 1955 Mitglied."},
+  {term:"Opposition",cat:"Parlament",def:"Parteien, die nicht der Regierung angehoeren. Aufgabe: Regierung kritisieren, Alternativen aufzeigen und Kontrolle ausueben. In Deutschland verfassungsrechtlich gesichert."},
+  {term:"Partei",cat:"Grundbegriff",def:"Politische Organisation, die Buerger mit aehnlichen Zielen zusammenfasst. In Deutschland durch das Parteiengesetz geregelt; Parteien erhalten staatliche Finanzierung nach Wahlergebnis."},
+  {term:"Populismus",cat:"Politikwissenschaft",def:"Politischer Stil, der das 'einfache Volk' gegen eine korrupte 'Elite' ausspielt. Vereinfacht komplexe Themen, nutzt Emotionen. Kann linker (Chavez) oder rechter (Trump) Auspraegung sein."},
+  {term:"Rechtsstaat",cat:"Staatsrecht",def:"Staat, in dem alle Staatsgewalt an Recht und Gesetz gebunden ist. Beinhaltet: Grundrechte, Gewaltenteilung, unabhaengige Gerichte und Verhaeltnismaessigkeit staatlichen Handelns."},
+  {term:"Subsidiaritaet",cat:"EU / Foederalismus",def:"Entscheidungen sollen auf der niedrigst moeglichen Ebene getroffen werden. In der EU: Die EU handelt nur, wenn Ziele besser auf EU-Ebene erreicht werden koennen."},
+  {term:"Untersuchungsausschuss",cat:"Parlament",def:"Parlamentarisches Kontrollgremium zur Aufklaerung von Missstaenden. Kann Zeugen vorladen und Akten anfordern. Bekannte Beispiele: NSA-Ausschuss, Wirecard-Ausschuss."},
+  {term:"Verhältniswahl",cat:"Wahlen",def:"Wahlsystem, bei dem die Sitzverteilung dem Stimmenanteil entspricht. In Deutschland durch die Zweitstimme realisiert. Foerdert Mehrparteiensystem und Koalitionsregierungen."},
+  {term:"Veto",cat:"Staatsrecht",def:"Verweigerungsrecht einer Institution. In Deutschland hat der Bundesrat ein aufschiebendes Veto gegen manche Bundesgesetze, das der Bundestag aber ueberstimmen kann."},
+  {term:"Volkssouveraenitaet",cat:"Demokratie",def:"Alle Staatsgewalt geht vom Volk aus (Art. 20 GG). In der repraesentativen Demokratie wird sie durch Wahlen und gewahlte Vertreter ausgeuubt."},
+  {term:"Wahlrecht",cat:"Wahlen",def:"Das aktive (waehlen) und passive (gewaehlt werden) Recht. In Deutschland: aktiv und passiv ab 18 Jahren. Allgemein, frei, gleich und geheim (Art. 38 GG)."},
+  {term:"Weimarer Republik",cat:"Geschichte",def:"Erste deutsche Demokratie 1919-1933. Scheiterte an Wirtschaftskrisen und dem Aufstieg des Nationalsozialismus. Lehren praegens das Grundgesetz massgeblich."},
+  {term:"Zivilgesellschaft",cat:"Gesellschaft",def:"Nichtstaatliche, nichtkommerzielle Organisationen: NGOs, Vereine, Gewerkschaften, Kirchen, Buergerinitiativen. Wichtiges Korrektiv zu staatlicher und wirtschaftlicher Macht."},
+
+  // Deutsches Regierungssystem
+  {term:"Bundeskanzler",cat:"Regierung",def:"Regierungschef der Bundesrepublik. Wird vom Bundestag gewaehlt, bestimmt die Richtlinien der Politik (Richtlinienkompetenz) und ernennt sowie entlaesst Minister. Amtszeit: in der Regel 4 Jahre."},
+  {term:"Bundespraesident",cat:"Institution",def:"Staatsoberhaupt Deutschlands mit vor allem repraesentativer Funktion. Wird von der Bundesversammlung gewaehlt, unterzeichnet Gesetze, kann den Bundestag aufloesen und hat eine moralische Autoriaetsfunktion."},
+  {term:"Bundesverfassungsgericht",cat:"Institution",def:"Hoechstes deutsches Gericht in Karlsruhe. Huetet das Grundgesetz, entscheidet ueber Grundrechtsverletzungen und prueft Gesetze auf Verfassungsmaessigkeit. 16 Richter, je 8 in zwei Senaten."},
+  {term:"Richtlinienkompetenz",cat:"Regierung",def:"Verfassungsrechtliches Privileg des Bundeskanzlers, die grundsaetzlichen Leitlinien der Regierungspolitik zu bestimmen. Minister leiten ihre Ressorts eigenstaendig, aber im Rahmen dieser Richtlinien."},
+  {term:"Kabinett",cat:"Regierung",def:"Die Bundesregierung als Kollegium: Bundeskanzler plus alle Bundesminister. Entscheidet nach dem Ressortprinzip (jeder Minister sein Bereich), Kollegialprinzip (gemeinsame Verantwortung) und Richtlinienprinzip."},
+  {term:"Vertrauensfrage",cat:"Staatsrecht",def:"Instrument des Bundeskanzlers: Er fragt den Bundestag, ob er noch sein Vertrauen besitzt. Verliert er, kann der Bundespraesident den Bundestag aufloesen und Neuwahlen ansetzen. Zuletzt 2024 genutzt."},
+  {term:"Vermittlungsausschuss",cat:"Parlament",def:"Gemeinsames Gremium von Bundestag und Bundesrat zur Einigung bei Gesetzgebungskonflikten. Tagt vertraulich, kein Oeffentlichkeitsprinzip. Wichtige Rolle bei komplizierten Reformgesetzen."},
+  {term:"Immunitaet",cat:"Parlament",def:"Schutz von Abgeordneten vor Strafverfolgung ohne Zustimmung des Bundestages. Soll die Arbeitsfaehigkeit des Parlaments sichern. Der Bundestag kann die Immunitaet aufheben."},
+  {term:"Indemnitaet",cat:"Parlament",def:"Abgeordnete duerfen fuer Abstimmungen und Reden im Bundestag nicht rechtlich verfolgt werden. Gilt dauerhaft, auch nach Ende des Mandats. Sichert die freie parlamentarische Rede."},
+  {term:"Petitionsrecht",cat:"Grundrechte",def:"Jeder hat das Recht, sich schriftlich mit Bitten oder Beschwerden an den Bundestag zu wenden (Art. 17 GG). Der Petitionsausschuss prueft die Anliegen. Laengst auch online moeglich."},
+
+  // Wahlen & Wahlsystem
+  {term:"Erststimme",cat:"Wahlen",def:"Waehler waehlen damit einen Direktkandidaten im Wahlkreis. Wer die meisten Erststimmen erhaelt, zieht direkt in den Bundestag ein (Direktmandat). Deutschland hat 299 Wahlkreise."},
+  {term:"Zweitstimme",cat:"Wahlen",def:"Die wichtigere Stimme: bestimmt die Sitzverteilung im Bundestag nach Parteistaerke. Parteien muessen mindestens 5% der Zweitstimmen oder 3 Direktmandate erreichen, um einzuziehen."},
+  {term:"Fuenf-Prozent-Huerde",cat:"Wahlen",def:"Sperrklausel: Parteien muessen bundesweit mindestens 5% der Zweitstimmen erhalten, um in den Bundestag einzuziehen. Ausnahme: 3 gewonnene Direktmandate. Soll Parteienzersplitterung verhindern."},
+  {term:"Wahlkreis",cat:"Wahlen",def:"Geografisch abgegrenzter Bezirk, in dem ein Direktkandidat per Erststimme gewaehlt wird. Deutschland hat 299 Wahlkreise. Jeder Wahlkreis sendet einen Abgeordneten direkt in den Bundestag."},
+  {term:"Ueberhangmandate",cat:"Wahlen",def:"Entstehen, wenn eine Partei mehr Direktmandate gewinnt als ihr nach Zweitstimmen zustehen. Fuehren zu einem groesseren Bundestag. Reform 2023 begrenzte Ueberhangmandate stark."},
+  {term:"Briefwahl",cat:"Wahlen",def:"Stimmabgabe per Post ohne persoenliches Erscheinen im Wahllokal. In Deutschland stark gewachsen: Bei der Bundestagswahl 2021 wahlten ueber 47% per Brief. Antrag beim Wahlamt erforderlich."},
+  {term:"Bundeswahlleiter",cat:"Wahlen",def:"Unabhaengiger Bundesbeamter, der Bundestagswahlen organisiert und offiziell das Wahlergebnis feststellt. Aktuell Georg Thiel. Leitet das Statistische Bundesamt in Personalunion."},
+
+  // Europaeische Union
+  {term:"Europaeische Union",cat:"Europa",def:"Politisch-wirtschaftlicher Zusammenschluss von 27 europaeischen Staaten. Groesster Binnenmarkt der Welt. Basiert auf Vertraegen (Lissabon-Vertrag 2009). Deutschland ist Gruendungsmitglied."},
+  {term:"EU-Kommission",cat:"Europa",def:"Die Exekutive der EU mit 27 Kommissaren (je einer pro Mitgliedstaat). Hat das Initiativmonopol fuer EU-Gesetze. Praesidentin seit 2019: Ursula von der Leyen. Sitz: Bruessel."},
+  {term:"Europaeisches Parlament",cat:"Europa",def:"Direkt gewahltes Parlament der EU mit 720 Abgeordneten (MdEP). Sitze in Strassburg und Bruessel. Mitgesetzgebung mit dem Rat. Deutsche MdEPs: 96 von 720."},
+  {term:"Rat der EU",cat:"Europa",def:"Vertretung der Mitgliedstaaten auf Ministerebene. Zusammen mit dem EU-Parlament die gesetzgebende Gewalt der EU. Je nach Thema tagen andere Minister (Aussenminister, Finanzminister etc.)."},
+  {term:"Europaeischer Rat",cat:"Europa",def:"Gipfeltreffen der Staats- und Regierungschefs aller EU-Laender. Gibt die politischen Leitlinien vor. Trifft sich mindestens viermal jaehrlich. Praesident: aktuell Antonio Costa."},
+  {term:"Einstimmigkeit",cat:"Europa",def:"In bestimmten EU-Bereichen (Steuern, Aussenpolitik, Verfassungsfragen) muss der Rat einstimmig entscheiden. Jeder Mitgliedstaat hat ein Vetorecht. Fuehrt oft zu langwierigen Verhandlungen."},
+  {term:"Qualifizierte Mehrheit",cat:"Europa",def:"Haeufigster Abstimmungsmodus im EU-Rat: 55% der Mitgliedstaaten (mind. 15) repraesentierend 65% der EU-Bevoelkerung muessen zustimmen. Gilt fuer die meisten Politikbereiche."},
+  {term:"Brexit",cat:"Europa",def:"Austritt Grossbritanniens aus der EU am 31. Januar 2020. Nach dem Referendum 2016 (52% fuer Austritt) folgte eine mehrjaehrige Austrittsverhandlung. Hat die EU und UK nachhaltig veraendert."},
+  {term:"Schengen-Raum",cat:"Europa",def:"Zone ohne Grenzkontrollen fuer 29 europaeische Staaten (nicht alle EU-Mitglieder). Ermoeglicht freie Personenfreizuegigkeit. Rumänien und Bulgarien traten 2024 bei."},
+  {term:"Eurozone",cat:"Europa",def:"Die 20 EU-Staaten, die den Euro als Waehrung nutzen. Geldpolitik liegt bei der Europaeischen Zentralbank (EZB) in Frankfurt. Deutschland ist Gruendungsmitglied seit 2002."},
+
+  // Internationale Beziehungen & Sicherheit
+  {term:"Voelkerrecht",cat:"International",def:"Rechtssystem, das die Beziehungen zwischen Staaten regelt. Basiert auf Vertraegen und Gewohnheitsrecht. Wichtige Institutionen: UN, Internationaler Gerichtshof (IGH), Internationaler Strafgerichtshof (IStGH)."},
+  {term:"UN-Sicherheitsrat",cat:"International",def:"Wichtigstes Organ der Vereinten Nationen fuer Frieden und Sicherheit. 15 Mitglieder: 5 staendige mit Vetorecht (USA, Russland, China, UK, Frankreich) und 10 nichtstaendige."},
+  {term:"Geopolitik",cat:"International",def:"Analyse von Politik unter Beruecksichtigung geografischer Faktoren wie Lage, Ressourcen, Bevoelkerung. Begriff wurde missbraucht, bleibt aber analytisch relevant fuer Machtverteilung und Konflikte."},
+  {term:"Sanktionen",cat:"International",def:"Wirtschaftliche oder politische Druckmittel gegen Staaten oder Personen ohne Kriegseinsatz. Beispiele: EU-Sanktionen gegen Russland nach 2022, Handelssanktionen der USA gegen Iran."},
+  {term:"Multilateralismus",cat:"International",def:"Aussenpolitischer Ansatz, Probleme durch internationale Zusammenarbeit vieler Staaten zu loesen (UN, WTO, Pariser Klimaabkommen). Gegenteil: Unilateralismus (Alleingang eines Staates)."},
+  {term:"Zwei-Prozent-Ziel",cat:"International",def:"NATO-Vereinbarung, wonach Mitgliedstaaten 2% ihres BIP fuer Verteidigung ausgeben sollen. Deutschland hat dieses Ziel lange verfehlt und erreicht es seit 2024 erstmals wieder."},
+  {term:"Soft Power",cat:"International",def:"Politischer Einfluss durch Anziehungskraft statt Zwang: Kultur, Sprache, Wirtschaft, Werte. Begriff gepraegt von Joseph Nye. Gegenteil: Hard Power (militaerische und wirtschaftliche Staerke)."},
+
+  // Wirtschaft & Sozialpolitik
+  {term:"Soziale Marktwirtschaft",cat:"Wirtschaft",def:"Deutsches Wirtschaftsmodell: freier Markt kombiniert mit sozialem Ausgleich und staatlicher Ordnung. Konzept von Ludwig Erhard (1948). Verbindet Wettbewerbsfreiheit mit sozialem Schutz."},
+  {term:"Bundeshaushalt",cat:"Wirtschaft",def:"Einnahmen und Ausgaben des Bundes fuer ein Jahr. Wird vom Bundestag beschlossen. 2024: ca. 477 Mrd. Euro. Die Schuldenbremse begrenzt neue Schulden auf 0,35% des BIP."},
+  {term:"Schuldenbremse",cat:"Wirtschaft",def:"Verfassungsregel (Art. 109 GG, seit 2009): Bund darf strukturell max. 0,35% des BIP neue Schulden aufnehmen. Laender duerfen gar keine neuen Schulden machen. Stark umstritten."},
+  {term:"Sozialversicherung",cat:"Wirtschaft",def:"Pflichtversicherungen in Deutschland: Renten-, Kranken-, Pflege-, Unfall- und Arbeitslosenversicherung. Finanziert durch Beitraege von Arbeitnehmern und Arbeitgebern je zur Haelfte."},
+  {term:"Mindestlohn",cat:"Wirtschaft",def:"Gesetzlich festgelegter Mindeststundenlohn. In Deutschland seit 2015. Aktuell (2024): 12,41 Euro, ab 2025: 12,82 Euro. Wird von der Mindestlohnkommission regelmaessig angepasst."},
+  {term:"Tarifautonomie",cat:"Wirtschaft",def:"Verfassungsrechtlich geschuetztes Recht von Gewerkschaften und Arbeitgeberverbanden, Arbeitsbedingungen und Loehne eigenstaendig in Tarifvertraegen auszuhandeln, ohne staatliche Einmischung."},
+  {term:"Konjunktur",cat:"Wirtschaft",def:"Schwankungen der wirtschaftlichen Aktivitaet im Zeitverlauf. Phasen: Aufschwung, Hochkonjunktur, Abschwung, Rezession. Staat kann durch Fiskalpolitik (Steuern, Ausgaben) gegensteuern."},
+
+  // Medien & Oeffentlichkeit
+  {term:"Pressefreiheit",cat:"Medien",def:"Grundrecht (Art. 5 GG): Presse darf frei berichten, ohne staatliche Zensur. Deutschland belegt im Pressefreiheitsindex 2024 Platz 10 von 180. RSF misst jaehrlich den weltweiten Stand."},
+  {term:"Oeffentlich-rechtlicher Rundfunk",cat:"Medien",def:"ARD, ZDF und Deutschlandradio: durch Rundfunkbeitrag (2024: 18,36 Euro/Monat) finanziert, staatsfern und unabhaengig. Auftrag: Information, Bildung, Kultur, Unterhaltung fuer alle."},
+  {term:"Meinungsfreiheit",cat:"Grundrechte",def:"Grundrecht (Art. 5 GG): Jeder darf seine Meinung frei aeussern. Grenzen: persoenliche Ehre, allgemeine Gesetze, Jugendschutz. Gilt nicht fuer Volksverhetzung oder Aufruf zur Gewalt."},
+  {term:"Filterblasen",cat:"Medien",def:"Algorithmisch erzeugte Informationsumgebungen, in denen Nutzer vor allem Inhalte sehen, die ihre bestehenden Ansichten bestaetigen. Kann politische Polarisierung und gesellschaftliche Spaltung verstaerken."},
+  {term:"Desinformation",cat:"Medien",def:"Bewusst verbreitete Falschinformationen mit politischer Absicht. Unterschied zu Misinformation (unbeabsichtigt falsch). Staatliche und nichtstaatliche Akteure nutzen Desinformation als Machtinstrument."},
+
+  // Politische Theorie & Ideologien
+  {term:"Konservatismus",cat:"Ideologie",def:"Politische Grundhaltung, die bewaehlte Traditionen und gesellschaftliche Stabiliaet bewahren will. Betont Familie, Eigentum, Ordnung und Nation. In Deutschland: CDU/CSU als Hauptvertreter."},
+  {term:"Sozialdemokratie",cat:"Ideologie",def:"Politische Richtung, die Kapitalismus akzeptiert, aber durch starken Sozialstaat zaehmen will. Betont Gleichheit, Solidaritaet, Arbeitnehmerrechte. In Deutschland: SPD als Hauptvertreter."},
+  {term:"Liberalismus",cat:"Ideologie",def:"Politische Philosophie, die individuelle Freiheit, Rechtsstaatlichkeit und begrenzte Staatsgewalt betont. Unterscheidet sich in sozialliberal (FDP-Mitte) und wirtschaftsliberal (FDP-Recht)."},
+  {term:"Gruene Politik",cat:"Ideologie",def:"Politische Bewegung mit Fokus auf Umweltschutz, Nachhaltigkeit, soziale Gerechtigkeit und Basisdemokratie. In Deutschland: Gruene als Hauptpartei. Wurzeln in der Oekologiebewegung der 1970er Jahre."},
+  {term:"Autoritarismus",cat:"Ideologie",def:"Regierungssystem mit starker Zentralmacht, eingeschraenkten Freiheiten und schwacher Opposition. Kein Totalitarismus (der alles kontrolliert), aber keine Demokratie. Beispiele: Russland, Tuerkei, Ungarn."},
+  {term:"Nationalismus",cat:"Ideologie",def:"Politische Ideologie, die die Nation als wichtigste kollektive Identitaet betont. Kann demokratisch (Patriotismus) oder aggressiv-expansiv sein. Letztes war Grundlage beider Weltkriege."},
+  {term:"Totalitarismus",cat:"Ideologie",def:"Extremform der Herrschaft: Der Staat will alle Lebensbereiche kontrollieren (Wirtschaft, Kultur, Privatleben). Historische Beispiele: NS-Deutschland, Stalinismus. Begriff gepraegt von Hannah Arendt."},
+
+  // Rechtsstaat & Grundrechte
+  {term:"Grundrechte",cat:"Grundrechte",def:"In Art. 1-19 GG garantierte individuelle Rechte gegenueber dem Staat: Menschenwuerde, Freiheitsrechte, Gleichheitsrechte. Binden alle staatliche Gewalt unmittelbar (Art. 1 Abs. 3 GG)."},
+  {term:"Verfassungsbeschwerde",cat:"Grundrechte",def:"Jedermanns Recht, nach Ausschoepfung des Rechtswegs beim BVerfG eine Verletzung von Grundrechten durch staatliches Handeln zu ruegen. Ca. 6.000 Eingaben jaehrlich; wenige werden angenommen."},
+  {term:"Menschenwuerde",cat:"Grundrechte",def:"Art. 1 GG: 'Die Wuerde des Menschen ist unantastbar.' Absolut geschuetztes Grundrecht, nicht abwaegbar gegen andere Rechtswerte. Kern der deutschen Verfassungsidentitaet seit 1949."},
+  {term:"Verhaeltnismaessigkeit",cat:"Staatsrecht",def:"Grundprinzip des Rechtsstaats: Staatliche Massnahmen muessen geeignet, erforderlich und angemessen sein. Jeder Grundrechtseingriff wird daran gemessen. Zentrales Pruefkriterium des BVerfG."},
+  {term:"Ewigkeitsklausel",cat:"Verfassung",def:"Art. 79 Abs. 3 GG: Bestimmte Verfassungsprinzipien (Menschenwuerde, Demokratie, Foederalismus, Rechtsstaat) duerfen durch kein Gesetz und keine Verfassungsaenderung beseitigt werden."},
+
+  // Gesellschaft & Demokratie
+  {term:"Zivilcourage",cat:"Gesellschaft",def:"Mut, fuer eigene oder fremde Rechte einzutreten, auch gegen Widerstand. Demokratische Tugend: Nur aktive Buerger koennen eine Demokratie lebendig halten. Foerderung durch Schulen und bpb."},
+  {term:"Wahlbeteiligung",cat:"Wahlen",def:"Anteil der Wahlberechtigten, die tatsaechlich abstimmen. Bundestagswahl 2021: 76,6%. Sinkende Beteiligung gilt als Warnsignal fuer demokratischen Zustand. Briefwahl hat die Beteiligung gesteigert."},
+  {term:"Politische Bildung",cat:"Gesellschaft",def:"Vermittlung von Wissen, Faehigkeiten und Werten fuer demokratische Teilhabe. In Deutschland: bpb (Bund), Landeszentralen fuer politische Bildung, Schulen. Ziel: muendige Staatsbuerger."},
+  {term:"Extremismus",cat:"Gesellschaft",def:"Politische Positionen, die grundlegende Werte der freiheitlichen Demokratie ablehnen. Verfassungsschutz beobachtet Rechts-, Links- und Islamismus. Abgrenzung von legaler Radikalitaet wichtig."},
+  {term:"Verfassungsschutz",cat:"Institution",def:"Inlandsgeheimdienst auf Bundes- und Laenderebene. Beobachtet verfassungsfeindliche Bestrebungen, darf aber keine polizeilichen Befugnisse nutzen (Trennungsgebot). Untersteht parlamentarischer Kontrolle."},
+  {term:"Buergergeld",cat:"Wirtschaft",def:"Sozialleistung fuer erwerbsfaehige Hilfesuchende, ersetzt seit 2023 Hartz IV. Umfasst Regelsatz (2024: 563 Euro/Monat fuer Alleinstehende), Unterkunftskosten und Eingliederungsleistungen."},
+  {term:"Klimapolitik",cat:"Umwelt",def:"Staatliche Massnahmen zur Reduktion von Treibhausgasen und Anpassung an Klimawandel. Deutschland: Klimaschutzgesetz mit Sektorziel. EU: Fit for 55 (55% weniger Emissionen bis 2030 vs. 1990)."},
+  {term:"Energiewende",cat:"Umwelt",def:"Deutschlands Strategie zum Umbau der Energieversorgung auf erneuerbare Quellen. Atomausstieg 2023 abgeschlossen. Ziel: 80% Strom aus Erneuerbaren bis 2030. Groesste Infrastrukturtransformation seit Jahrzehnten."},
+
+  // Deutsches Regierungssystem (Vertiefung)
+  {term:"Bundesministerium",cat:"Regierung",def:"Obere Bundesbehoerde unter Leitung eines Bundesministers. Deutschland hat aktuell 14 Ministerien. Minister leiten ihr Ressort eigenstaendig im Rahmen der Richtlinien des Bundeskanzlers."},
+  {term:"Staatssekretar",cat:"Regierung",def:"Hoechster Beamter (beamteter StS) oder politischer Stellvertreter (parlamentarischer StS) in einem Ministerium. Parlamentarische Staatssekretaere sind Abgeordnete und helfen beim Kontakt zum Bundestag."},
+  {term:"Bundesbeauftragte",cat:"Regierung",def:"Vom Bundestag oder der Regierung bestellte Amtstraeger fuer spezifische Aufgaben: Datenschutz, Behindertenrechte, Ostbeauftragte etc. Berichten dem Bundestag und sind politisch unabhaengig."},
+  {term:"Geschaeftsordnung",cat:"Parlament",def:"Interne Regeln des Bundestages fuer den Ablauf von Debatten, Abstimmungen und Ausschussarbeit. Legt Redezeiten, Antragsverfahren und Ordnungsmassnahmen fest. Kann nur mit Mehrheit geaendert werden."},
+  {term:"Plenum",cat:"Parlament",def:"Vollversammlung aller Abgeordneten des Bundestages. Hier werden Gesetze in drei Lesungen beraten und verabschiedet, Regierungserklarungen abgegeben und Fragestunden abgehalten."},
+  {term:"Ausschuss",cat:"Parlament",def:"Spezialisiertes Arbeitsgremium des Bundestages, das Gesetzentwuerfe vorberaet. Zusammensetzung spiegelt die Fraktionsstaerken wider. Ca. 24 staendige Ausschuesse (Innen, Haushalt, Aussen etc.)."},
+  {term:"Bundestagspraesident",cat:"Parlament",def:"Vorsitzender des Bundestages, leitet Plenarsitzungen und vertritt das Parlament. Traditionell stellt die staerkste Fraktion den Praesidenten. Dritter in der protokollarischen Rangfolge nach Bundespraesidenten und Bundesratspraesident."},
+  {term:"Politische Beamte",cat:"Regierung",def:"Beamte in besonders politiknahen Positionen (z.B. Staatsekretaere, Abteilungsleiter), die jederzeit in den einstweiligen Ruhestand versetzt werden koennen. Erlaubt politischen Wechsel bei Regierungswechsel."},
+  {term:"Kohabitation",cat:"Regierung",def:"Situation, in der Staatsoberhaupt und Regierungschef verschiedenen politischen Lagern angehoeren. In Deutschland selten relevant, praegendes Phaenomen der Fuenften Franzoesischen Republik (z.B. Mitterrand/Chirac)."},
+  {term:"Regierungserklaerung",cat:"Parlament",def:"Formelle Erklaerung des Bundeskanzlers zu Beginn einer Legislaturperiode oder bei wichtigen Anlaessen, in der die Regierungsziele dargelegt werden. Anschliessend Aussprache aller Fraktionen."},
+  {term:"Aktuelle Stunde",cat:"Parlament",def:"Kurzdebatten im Bundestag zu tagesaktuellen Themen auf Antrag einer Fraktion. Jeder Redner hat maximal fuenf Minuten. Dient der schnellen parlamentarischen Reaktion auf aktuelle Ereignisse."},
+  {term:"Namentliche Abstimmung",cat:"Parlament",def:"Abstimmungsform, bei der das individuelle Stimmverhalten jedes Abgeordneten protokolliert und veroeffentlicht wird. Muss von einer Fraktion oder 5% der Abgeordneten beantragt werden."},
+  {term:"Hammelsprung",cat:"Parlament",def:"Abstimmungsverfahren im Bundestag: Abgeordnete verlassen den Saal und betreten ihn durch drei verschiedene Tueren (Ja, Nein, Enthalten). Wird bei unklarem Ergebnis der Handabstimmung angewandt."},
+
+  // Laender & Kommunen
+  {term:"Landtag",cat:"Staatsaufbau",def:"Parlament eines Bundeslandes. Waehlt den Ministerpraesident, verabschiedet Landesgesetze und den Landeshaushalt. Alle 16 Bundeslaender haben eigene Landtage mit Wahlperioden von 4-5 Jahren."},
+  {term:"Ministerpraesident",cat:"Staatsaufbau",def:"Regierungschef eines Bundeslandes. Wird vom Landtag gewaehlt. Hat im Bundesrat Stimmrecht fuer sein Land. Der Bundesratspraesident wird jedes Jahr reihum von einem Ministerpraesident gestellt."},
+  {term:"Kommunalpolitik",cat:"Staatsaufbau",def:"Politik auf Gemeinde- und Kreisebene: Stadtrat, Gemeinderat, Kreistag. Zustaendig fuer Kitas, Strassenbau, Wasser, OEPNV, Bauleitplanung. Kommunale Selbstverwaltung durch Art. 28 GG garantiert."},
+  {term:"Buergermeister",cat:"Staatsaufbau",def:"Leitungsperson einer Gemeinde oder Stadt. In den meisten Bundeslaendern direkt gewaehlt. Fuehrt die Verwaltung, repraesentiert die Stadt und leitet den Gemeinderat bzw. Stadtrat."},
+  {term:"Stadtrat",cat:"Staatsaufbau",def:"Gewaehltes Gremium einer Stadt, das lokale Politik gestaltet. Entscheidet ueber Haushalt, Bebauungsplaene, kommunale Unternehmen. Zusammensetzung spiegelt lokale politische Verhaeltnisse wider."},
+  {term:"Kreistag",cat:"Staatsaufbau",def:"Gewahltes Parlament eines Landkreises. Kontrolliert den Landrat, beschliesst den Kreishaushalt und entscheidet ueber kreiskommunale Aufgaben wie Krankenhaeuser, OEPNV und Abfallwirtschaft."},
+  {term:"Gebietsreform",cat:"Staatsaufbau",def:"Zusammenlegung von Gemeinden, Kreisen oder Laendern zur Effizienzsteigerung. Historisch bedeutsam: Gemeindegebietsreform der 1970er Jahre. Heute wieder diskutiert angesichts demographischen Wandels."},
+  {term:"Laenderfinanzausgleich",cat:"Staatsaufbau",def:"Umverteilung von Steuereinnahmen zwischen finanzstarken und -schwachen Bundeslaendern. Bayern, Baden-Wuerttemberg und Hamburg zahlen ein; Berlin, Bremen, Sachsen erhalten. Sichert gleichwertige Lebensverhaeltnisse."},
+
+  // Rechtssystem
+  {term:"Verwaltungsgericht",cat:"Rechtssystem",def:"Gericht fuer Streitigkeiten zwischen Buerger und Staat. Dreistufig: Verwaltungsgericht – Oberverwaltungsgericht – Bundesverwaltungsgericht. Zustaendig z.B. fuer Asylrecht, Baugenehmigungen, Beamtenrecht."},
+  {term:"Bundesgerichtshof",cat:"Rechtssystem",def:"Hoechstes deutsches Gericht fuer Zivil- und Strafsachen mit Sitz in Karlsruhe. Revisionsinstanz, entwickelt das Recht weiter. Unterschied zum BVerfG: prueft keine Verfassungsfragen."},
+  {term:"Strafrecht",cat:"Rechtssystem",def:"Rechtsgebiet, das staatliche Reaktionen auf Straftaten regelt. Bundeseinheitlich im Strafgesetzbuch (StGB). Staatsanwaltschaft verfolgt Straftaten von Amts wegen; Gerichte sprechen Urteile."},
+  {term:"Richterliche Unabhaengigkeit",cat:"Rechtssystem",def:"Verfassungsprinzip: Richter sind nur dem Gesetz unterworfen, koennen nicht abberufen oder versetzt werden (ausser durch Disziplinarverfahren). Grundlage des Rechtsstaatsprinzips in Art. 97 GG."},
+  {term:"Normenkontrolle",cat:"Rechtssystem",def:"Pruefung von Gesetzen auf ihre Verfassungsmaessigkeit. Abstrakte Normenkontrolle: auf Antrag von Regierungen ohne konkreten Fall. Konkrete: durch Gerichte bei laufenden Verfahren."},
+  {term:"Gewohnheitsrecht",cat:"Rechtssystem",def:"Rechtsnormen, die nicht durch Gesetz, sondern durch langjaerige gleichmaessige Uebung und Rechtsueberzeugung entstehen. Im Voelkerrecht bedeutsam; im deutschen Recht durch kodifiziertes Recht weitgehend verdraengt."},
+  {term:"Rechtshilfe",cat:"Rechtssystem",def:"Zusammenarbeit von Justizbehorden verschiedener Staaten: Auslieferung von Tatverdaechtigten, Vollstreckung auslaendischer Urteile, Beweiserhebung im Ausland. Geregelt durch bilaterate Vertraege."},
+
+  // Wahlen & Demokratie (Vertiefung)
+  {term:"Volksbegehren",cat:"Demokratie",def:"Direktdemokratisches Instrument auf Laenderebene: Buerger fordern ein Volksbegehren zur Abstimmung, muessen eine bestimmte Anzahl Unterschriften sammeln. Auf Bundesebene nicht vorgesehen."},
+  {term:"Volksentscheid",cat:"Demokratie",def:"Direkte Abstimmung aller Stimmberechtigten ueber eine Sachfrage. In allen Bundeslaendern moeglich, auf Bundesebene nicht. Schweiz nutzt es regelmaessig. Kontrovers: Mehrheit kann Minderheiten ueberstimmen."},
+  {term:"Parteiverbotsverfahren",cat:"Verfassung",def:"Verfahren vor dem BVerfG zur Aufloesung verfassungsfeindlicher Parteien (Art. 21 GG). Bisher zweimal erfolgreich (SRP 1952, KPD 1956). NPD-Verfahren 2017 scheiterte trotz verfassungsfeindlicher Ziele."},
+  {term:"Wahlpruefung",cat:"Wahlen",def:"Ueberpruefung der Gueltigkeit einer Wahl auf Antrag. Beim Bundestag: Wahlpruefungsausschuss des Bundestages, Beschwerde beim BVerfG. Ziel: Sicherung der Integritaet demokratischer Wahlen."},
+  {term:"Hochrechnung",cat:"Wahlen",def:"Statistisch-wissenschaftliche Schätzung des endgültigen Wahlergebnisses auf Basis erster ausgezaehlter Stimmbezirke. Von ARD und ZDF beauftragt. Erste Hochrechnung meist kurz nach 18 Uhr."},
+  {term:"Exit Poll",cat:"Wahlen",def:"Befragung von Waehlern unmittelbar nach ihrer Stimmabgabe. Gibt erste Hinweise auf Wahlergebnis, bevor Stimmen ausgezaehlt sind. Wird in Deutschland um 18 Uhr (Wahlschluss) veroeffentlicht."},
+  {term:"Repraesentation",cat:"Demokratie",def:"Prinzip, dass gewahlte Vertreter im Namen der Buerger handeln. Spiegelt nicht notwendigerweise alle gesellschaftlichen Gruppen ab. Diskussion ueber bessere Repraesentation von Frauen, Migranten, Jungen."},
+  {term:"Plebiszit",cat:"Demokratie",def:"Direkte Volksabstimmung. In Deutschland nach Erfahrungen mit Weimarer Republik und NS-Zeit auf Bundesebene bewusst nicht vorgesehen. Nur bei Laenderneugliederung (Art. 29 GG) zwingend vorgeschrieben."},
+
+  // Europaeische Union (Vertiefung)
+  {term:"Lissabon-Vertrag",cat:"Europa",def:"Grundlagenvertrag der EU seit 2009. Reformierte Entscheidungsprozesse, staerkte das EP, schuf den Europaeischen Rat als Organ und fuehrte die Volksinitiative ein. Ersetzte den gescheiterten EU-Verfassungsvertrag."},
+  {term:"Binnenmarkt",cat:"Europa",def:"Der gemeinsame Wirtschaftsraum der EU mit freiem Verkehr von Waren, Dienstleistungen, Kapital und Personen (Vier Grundfreiheiten). Groesster Binnenmarkt der Welt, ca. 450 Millionen Menschen."},
+  {term:"Europaeische Zentralbank",cat:"Europa",def:"Zentralbank fuer die Eurozone mit Sitz in Frankfurt. Hauptaufgabe: Preisstabilitaet (Inflationsziel: 2%). Setzt Leitzinsen fest. Praesidentin: Christine Lagarde. Unabhaengig von nationalen Regierungen."},
+  {term:"Konvergenzkriterien",cat:"Europa",def:"Maastricht-Kriterien fuer den Eurobeitritt: Inflation max. 1,5% ueber EU-Durchschnitt, Staatsdefizit max. 3% BIP, Staatsschulden max. 60% BIP, Zinsen, Wechselkursstabilitaet. Guelten als Beitrittsbedingung."},
+  {term:"EU-Haushalt",cat:"Europa",def:"Jaehrlicher Haushaltsplan der EU, ca. 170 Mrd. Euro (2024). Finanziert aus BNE-Beitraegen der Mitgliedstaaten, Zolleinnahmen und Mehrwertsteuer. Groesste Posten: Agrar- und Regionalpolitik."},
+  {term:"Strukturfonds",cat:"Europa",def:"EU-Instrumente zur Foerderung wirtschaftlich schwacher Regionen und Bekaempfung von Arbeitslosigkeit. Wichtigste: Europaeischer Fonds fuer regionale Entwicklung (EFRE) und Europaeischer Sozialfonds (ESF)."},
+  {term:"Europaeische Buergerinitiative",cat:"Europa",def:"Direktdemokratisches Instrument der EU: Mindestens 1 Million EU-Buerger aus 7 Laendern koennen die Kommission auffordern, einen Rechtsakt vorzuschlagen. Seit 2012 in Kraft, bisher wenig genutzt."},
+  {term:"Erweiterungspolitik",cat:"Europa",def:"Prozess der Aufnahme neuer EU-Mitglieder. Kandidaten muessen Kopenhagener Kriterien erfuellen: Demokratie, Rechtsstaat, Menschenrechte, funktionsfaehige Marktwirtschaft. Aktuell: Ukraine, Moldau, Westbalkan."},
+  {term:"Gemeinsame Aussenpolitik",cat:"Europa",def:"GASP: Koordinierungsmechanismus der EU-Aussenpolitik. Entscheidungen meist einstimmig. EU-Aussenbeauftragter leitet den Europaeischen Auswaertigen Dienst (EAD). Kein EU-Veto, aber gemeinsame Positionen."},
+  {term:"Eurozonen-Krise",cat:"Europa",def:"Staatsschuldenkrise 2010-2015: Griechenland, Irland, Portugal, Spanien, Zypern benoetigen Hilfen. ESM (Europaeischer Stabilitaetsmechanismus) geschaffen. Diskussion ueber Transferunion und Solidaritaet."},
+  {term:"Kopenhagener Kriterien",cat:"Europa",def:"Beitrittsbedingungen der EU: stabile Demokratie und Rechtsstaat, Menschenrechte und Minderheitenschutz, funktionsfaehige Marktwirtschaft, Uebernahme des EU-Rechts (Acquis communautaire)."},
+
+  // Internationale Beziehungen (Vertiefung)
+  {term:"Diplomatie",cat:"International",def:"Fuehrung internationaler Beziehungen durch Verhandlungen zwischen staatlichen Vertretern. Botschafter vertreten Staaten im Ausland. Diplomatische Immunitaet schuetzt Diplomaten vor Strafverfolgung."},
+  {term:"Voelkerbund",cat:"Geschichte",def:"Vorlaeuferin der UN, gegruendet 1919 nach dem 1. Weltkrieg. Scheiterte wegen fehlendem US-Beitritt, Ausschluss Deutschlands und Sowjetunions und Unfaehigkeit, Aggression zu stoppen. Aufgeloest 1946."},
+  {term:"UN-Vollversammlung",cat:"International",def:"Organ der Vereinten Nationen, in dem alle 193 Mitgliedstaaten je eine Stimme haben. Kein Vetorecht, Resolutionen rechtlich nicht bindend aber politisch bedeutsam. Trifft sich jedes Jahr im September in New York."},
+  {term:"Internationaler Strafgerichtshof",cat:"International",def:"IStGH in Den Haag: verfolgt Voelkermord, Verbrechen gegen die Menschlichkeit und Kriegsverbrechen. Komplementaer zu nationalen Gerichten. USA, Russland, China nicht Mitglieder. Seit 2002 aktiv."},
+  {term:"Humanitaeres Voelkerrecht",cat:"International",def:"Kriegsvoeelkerrecht: regelt den Schutz von Zivilisten und verwundeten Soldaten im bewaffneten Konflikt. Genfer Konventionen von 1949 und ihre Zusatzprotokolle sind die Grundlage. Rotes Kreuz ueberwacht."},
+  {term:"Deterrence",cat:"International",def:"Abschreckungsstrategie: Verhinderung eines Angriffs durch Androhung unakzeptabler Gegenreaktion. Grundlage der NATO-Sicherheitsstrategie und nuklearer Abschreckung waehrend des Kalten Krieges."},
+  {term:"Kalter Krieg",cat:"Geschichte",def:"Systemkonflikt zwischen USA/Westen und UdSSR/Ostblock 1947-1991. Ruestungswettlauf, Stellvertreterkriege, ideologischer Kampf. Endete mit Zusammenbruch der UdSSR 1991. Praegte deutsche Teilung."},
+  {term:"Globalisierung",cat:"International",def:"Weltweite Verflechtung von Wirtschaft, Politik, Kultur und Kommunikation. Erleichtert Handel und Austausch, aber auch Ausbreitung von Krisen, Ungleichheit und Verlust nationaler Kontrolle."},
+  {term:"Fluechtlingsrecht",cat:"International",def:"Internationaler Schutz fuer Verfolgte: Genfer Fluechtlingskonvention 1951 garantiert Non-Refoulement (kein Abschieben in Verfolgerstaat). UNHCR koordiniert weltweiten Fluechtlingsschutz."},
+  {term:"G7 / G20",cat:"International",def:"Informelle Foren der wichtigsten Industrie- (G7) bzw. Volkswirtschaften (G20). Keine bindenden Beschluesse, aber politische Signalwirkung. Deutschland ist Mitglied beider Gruppen."},
+  {term:"OSZE",cat:"International",def:"Organisation fuer Sicherheit und Zusammenarbeit in Europa: 57 Mitgliedstaaten von Vancouver bis Wladiwostok. Frueherkennung von Konflikten, Wahlbeobachtung, Menschenrechte. Groesste regionale Sicherheitsorganisation."},
+  {term:"Russland-Ukraine-Krieg",cat:"International",def:"Russlands Angriffskrieg auf die Ukraine seit 24. Februar 2022. Verletzt das Voelkerrecht fundamental. Weitreichende Folgen fuer europ. Sicherheitsordnung, Energiepolitik, NATO-Erweiterung (Finnland 2023, Schweden 2024)."},
+
+  // Wirtschaft & Soziales (Vertiefung)
+  {term:"Bruttoinlandsprodukt",cat:"Wirtschaft",def:"BIP: Gesamtwert aller Gueter und Dienstleistungen, die in einem Jahr in einem Land produziert werden. Wichtigster Indikator fuer Wirtschaftsleistung. Deutschlands BIP 2024: ca. 4,2 Billionen Euro."},
+  {term:"Staatsverschuldung",cat:"Wirtschaft",def:"Gesamte aufgenommene Schulden eines Staates. Deutschlands Schuldenquote: ca. 63% des BIP (2024). Eurozonen-Regel: max. 60%. Schuldenbremse begrenzt Neuverschuldung des Bundes."},
+  {term:"Steuerpolitik",cat:"Wirtschaft",def:"Staatliche Gestaltung von Steuerarten, -saetzen und -verteilung. Ziele: Einnahmen erzielen, Umverteilung, Lenkung (z.B. Oekosteuern). In Deutschland: Bundestag und Bundesrat entscheiden gemeinsam."},
+  {term:"Solidaritaetszuschlag",cat:"Wirtschaft",def:"Zuschlag zur Einkommens- und Koerperschaftsteuer, 1991 zur Finanzierung der Deutschen Einheit eingefuehrt. Seit 2021 nur noch von Spitzenverdienern gezahlt. Vor BVerfG umstritten, 2023 fuer verfassungskonform erklaert."},
+  {term:"Rentenversicherung",cat:"Wirtschaft",def:"Pflichtversicherung fuer Arbeitnehmer, finanziert nach Umlageverfahren: Aktive zahlen fuer heutige Rentner. Demografischer Wandel stellt System vor Herausforderungen. Renteneintrittsalter schrittweise auf 67 angehoben."},
+  {term:"Arbeitslosengeld",cat:"Wirtschaft",def:"ALG I: Versicherungsleistung nach Jobverlust, abhaengig von vorherigen Beitraegen (60/67% des Nettolohns, bis zu 24 Monate). ALG II / Buergergeld: bedarfsorientierte Grundsicherung fuer Langzeitarbeitslose."},
+  {term:"Fiskalpolitik",cat:"Wirtschaft",def:"Staatliche Einflussnahme auf Konjunktur durch Steuern und Ausgaben. Expansiv: mehr Ausgaben/weniger Steuern bei Rezession. Restriktiv: Sparen bei Hochkonjunktur. Gegenpol zur Geldpolitik der Zentralbank."},
+  {term:"Geldpolitik",cat:"Wirtschaft",def:"Steuerung von Geldmenge und Zinsen durch Zentralbanken (EZB, Fed). Hauptinstrument: Leitzinsen. Ziel: Preisstabilitaet. Bei Inflation: Zinserhohung. Bei Rezession: Zinssenkung."},
+  {term:"Inflation",cat:"Wirtschaft",def:"Allgemeiner Anstieg des Preisniveaus ueber Zeit. Gemessen am Verbraucherpreisindex. EZB-Ziel: 2% jaehrlich. Hohe Inflation (2022: ueber 8% in Deutschland) erodiert Kaufkraft und Erpsarnisse."},
+  {term:"Tarifvertrag",cat:"Wirtschaft",def:"Vertrag zwischen Gewerkschaft und Arbeitgeberverband ueber Loehne, Arbeitszeiten und Bedingungen. Gilt fuer Mitglieder beider Seiten; Staat kann Allgemeinverbindlichkeit erklaeren. Grundlage der Tarifautonomie."},
+  {term:"Gewerkschaft",cat:"Wirtschaft",def:"Arbeitnehmerorganisation zur Vertretung von Lohn- und Arbeitsinteressen. Groesste in Deutschland: IG Metall, Ver.di, IG BCE. Tariffaehig, Streikrecht, Mitbestimmung in Unternehmen."},
+  {term:"Mitbestimmung",cat:"Wirtschaft",def:"Recht der Arbeitnehmer, an Unternehmensentscheidungen teilzuhaben. Betriebsrat im Unternehmen, Arbeitnehmervertreter im Aufsichtsrat (bei Unternehmen ab 2.000 Mitarbeitern: haelftaere Mitbestimmung)."},
+  {term:"Wirtschaftswachstum",cat:"Wirtschaft",def:"Zunahme des realen BIP. Foerdert Beschaeftigung und Steuereinnahmen, kann aber Ressourcen verbrauchen und Ungleichheit verstaerken. Diskussion ueber Postwachstum und Wohlstandsmasse jenseits des BIP."},
+  {term:"Strukturpolitik",cat:"Wirtschaft",def:"Staatliche Massnahmen zur langfristigen Foerderung bestimmter Regionen oder Branchen. Beispiele: Kohleausstiegsgelder fuer das Ruhrgebiet und die Lausitz, Hightech-Strategie fuer Digitalisierung und KI."},
+
+  // Medien & Oeffentlichkeit (Vertiefung)
+  {term:"Meinungsmacht",cat:"Medien",def:"Einfluss einzelner Medienunternehmen auf die oeffentliche Meinung. Medienkonzentrationsrecht (KEK in Deutschland) soll uebermaeßige Konzentration verhindern. Axel Springer, Bertelsmann als groesste private Verlage."},
+  {term:"Agenda-Setting",cat:"Medien",def:"Medien bestimmen nicht, was Menschen denken, aber worUEber sie nachdenken. Durch Themenselektion und Berichterstattungsintensitaet beeinflussen Medien, welche Themen als wichtig wahrgenommen werden."},
+  {term:"Framing",cat:"Medien",def:"Art und Weise, wie ein Thema dargestellt und eingerahmt wird. Gleiche Fakten koennen durch unterschiedliche Rahmungen gegensaetzliche Einstellungen erzeugen. Wichtiges Instrument in der Politikvermittlung."},
+  {term:"Soziale Medien",cat:"Medien",def:"Digitale Plattformen (Instagram, TikTok, X, YouTube), auf denen Nutzer Inhalte erstellen und teilen. Veraendern politische Kommunikation: Direktzugang, Viralitaet, Algorithmen, Desinformation."},
+  {term:"Rundfunkrat",cat:"Medien",def:"Kontrollgremium oeffentlich-rechtlicher Sender. Setzt sich aus Vertretern gesellschaftlicher Gruppen zusammen. Ueberwacht Programmgrundsaetze, waehlt Intendanten, genehmigt Haushalt."},
+  {term:"Pressekonferenz",cat:"Medien",def:"Informationsveranstaltung, bei der Politiker oder Institutionen Journalisten Auskuenfte geben. Bundespressekonferenz in Berlin ist wichtigstes Forum. Regierungspressekonferenzen dreimal woechentlich."},
+  {term:"Investigativer Journalismus",cat:"Medien",def:"Aufdeckung von Missstaenden, Korruption oder Machtmissbrauch durch tiefgehende Recherche. Vierte Gewalt der Demokratie. Bekannte Beispiele: Panama Papers, NSU-Aufdeckung, Wirecard-Recherchen."},
+  {term:"Staatsrundfunk",cat:"Medien",def:"Rundfunk unter direkter staatlicher Kontrolle. In Demokratien abgelehnt; in autoritaeren Systemen (Russland, China) wichtiges Propagandainstrument. Unterschied zum deutschen oeffentlich-rechtlichen System (staatsfern)."},
+
+  // Politische Theorie (Vertiefung)
+  {term:"Sozialismus",cat:"Ideologie",def:"Politisch-okonomische Theorie: Produktionsmittel in gesellschaftlichem Eigentum, Umverteilung zugunsten der Arbeitnehmer. Vielfaeltige Auspraegungen: demokratischer Sozialismus, Kommunismus, Marktsozialismus."},
+  {term:"Kommunismus",cat:"Ideologie",def:"Politische Theorie (Marx/Engels): klassenlose Gesellschaft durch Aufhebung von Privateigentum. Historisch: Sowjetunion, China, DDR. Unterschied: Sozialismus als Uebergangsstadium; Kommunismus als Ziel."},
+  {term:"Anarchismus",cat:"Ideologie",def:"Politische Philosophie, die jede Form von hierarchischer Herrschaft ablehnt. Freiwillige, dezentrale Organisation statt Staat. Verschiedene Schulen: Anarchokommunismus, Anarchokapitalismus, Mutualism."},
+  {term:"Feminismus",cat:"Ideologie",def:"Politisch-gesellschaftliche Bewegung fuer Gleichberechtigung der Geschlechter. Erste Welle: Wahlrecht. Zweite: Beruf und Familie. Dritte: Intersektionalitaet. Vierte: #MeToo, online-Aktivismus."},
+  {term:"Kommunitarismus",cat:"Ideologie",def:"Politische Philosophie gegen liberalen Individualismus: Gemeinschaft (Familie, Kirche, Lokalitaet) formt Identitaet und Werte. Vertreter: Alasdair MacIntyre, Michael Sandel, Charles Taylor."},
+  {term:"Republikanismus",cat:"Ideologie",def:"Politische Philosophie, die Buergertugend, gemeinsames Gut und Nicht-Beherrschung betont. Unterschied zum Liberalismus: Freiheit nicht nur als Nichteinmischung, sondern als Unabhaengigkeit von willkuerlicher Macht."},
+  {term:"Utilitarismus",cat:"Ideologie",def:"Ethische und politische Theorie: Handlungen sind nach ihrem Nutzen zu bewerten (groesstes Glueck fuer die groesste Zahl). Wichtige Vertreter: Jeremy Bentham, John Stuart Mill. Grundlage vieler Sozialpolitiken."},
+  {term:"Realpolitik",cat:"Ideologie",def:"Politisches Handeln nach Machbarkeit und Interessenkalkulaet statt nach idealistischen Prinzipien. Begriff aus dem 19. Jahrhundert (Bismarcks Aussenpolitik). Gegenteil: wertegeleitete Aussenpolitik."},
+
+  // Sicherheitspolitik
+  {term:"Bundeswehr",cat:"Sicherheit",def:"Streitkraefte der Bundesrepublik Deutschland mit ca. 181.000 aktiven Soldaten. Parlamentsarmee: jeder Auslandseinsatz benoetigt Bundestagsmandat. Gegr. 1955; seit 1990 auch in Auslandseinsaetzen aktiv."},
+  {term:"Parlamentsvorbehalt",cat:"Sicherheit",def:"Konstitutiver Parlamentsvorbehalt fuer Bundeswehr-Auslandseinsaetze: Der Bundestag muss jedem bewaffneten Einsatz zustimmen. BVerfG-Urteil 1994. Besonderheit im Vergleich zu anderen NATO-Staaten."},
+  {term:"Verfassungsschutzgesetz",cat:"Sicherheit",def:"Rechtliche Grundlage fuer die Arbeit des Verfassungsschutzes. Regelt Befugnisse (V-Leute, Observation, Datenspeicherung), parlamentarische Kontrolle und Zusammenarbeit mit anderen Behoerden."},
+  {term:"Polizei",cat:"Sicherheit",def:"In Deutschland Laendersache: 16 Landespolizeien plus Bundespolizei (Grenzsicherung, Bahnhoefe) und BKA (Schwerkriminalitaet, Terrorismus). Keine Bundespolizei im amerikanischen Sinne."},
+  {term:"Nachrichtendienste",cat:"Sicherheit",def:"BND (Auslandsaufklaerung), BfV (Verfassungsschutz Inland), MAD (Milaerischer Abschirmdienst). Unterliegen parlamentarischer Kontrolle durch das PKGr. Kein Polizeirecht (Trennungsgebot)."},
+  {term:"Cyberangriff",cat:"Sicherheit",def:"Digitaler Angriff auf Infrastruktur, Behorden oder Unternehmen. Attributierung schwierig. BSI (Bundesamt fuer Sicherheit in der Informationstechnik) schuetzt kritische IT-Infrastruktur Deutschlands."},
+  {term:"Hybride Kriegsfuehrung",cat:"Sicherheit",def:"Kombination militaerischer und nichtmilitaerischer Mittel: Desinformation, Cyberangriffe, wirtschaftlicher Druck, Unterstuetzung von Proxies. Russland nutzt diese Strategie gegenueber dem Westen."},
+
+  // Geschichte Deutschlands
+  {term:"Deutsche Teilung",cat:"Geschichte",def:"1949-1990: Westdeutschland (BRD) und Ostdeutschland (DDR) als getrennte Staaten. Berliner Mauer (1961-1989) Symbol der Teilung. Wiedervereinigung am 3. Oktober 1990. Tag der Deutschen Einheit."},
+  {term:"DDR",cat:"Geschichte",def:"Deutsche Demokratische Republik (1949-1990): sozialistischer Staat unter Fuehrung der SED. Stasi als Geheimpolizei mit 91.000 hauptamtlichen Mitarbeitern. Wirtschaftlich rueckstaendig, Oeffnung 1989 durch Massenproteste."},
+  {term:"Mauerfall",cat:"Geschichte",def:"9. November 1989: Oeffnung der Berliner Mauer nach wochenlangen Massendemonstrationen und einer Fehlankundigung durch Guenther Schabowski. Wendepunkt in der deutschen und europaeischen Geschichte."},
+  {term:"Nationalsozialismus",cat:"Geschichte",def:"Totalitaere Diktatur Hitlers 1933-1945. Rassenideologie, Vernichtung der europaeischen Juden (Holocaust, 6 Mio. Tote), 2. Weltkrieg (50-70 Mio. Tote). Praegendes Trauma der deutschen Geschichte und Verfassung."},
+  {term:"Entnazifizierung",cat:"Geschichte",def:"Nachkriegsprogramm der Alliierten zur Entfernung von NS-Belasteten aus oeffentlichen Aemtern und Demokratisierung Deutschlands. Unterschiedlich konsequent umgesetzt. Grundlage fuer den Neuanfang 1949."},
+  {term:"Parlamentarischer Rat",cat:"Geschichte",def:"Gremium von 65 Abgeordneten, das 1948/49 das Grundgesetz erarbeitete. Unter Vorsitz von Konrad Adenauer. Bewusste Lehren aus dem Scheitern der Weimarer Republik. Trat am 23. Mai 1949 in Kraft."},
+  {term:"Ostpolitik",cat:"Geschichte",def:"Willy Brandts Aussenpolitik ab 1969: 'Wandel durch Annaeherung' gegenueber der DDR und Ostblock. Anerkannte faktische Teilung, schaffte Grundlagenvertrag mit DDR 1972. Friedensnobelpreis 1971 fuer Brandt."},
+  {term:"Wiedervereinigung",cat:"Geschichte",def:"3. Oktober 1990: Beitritt der DDR zur BRD nach Art. 23 GG. Einigungsvertrag regelte Uebergang. Wirtschaftliche Angleichung dauert noch an. Solidaritaetszuschlag finanzierte Aufbau Ost bis 2021."},
+  {term:"Nürnberger Prozesse",cat:"Geschichte",def:"Kriegsverbrechertribunal der Alliierten 1945-46 in Nuernberg. Erstmals wurden Staatsfuehrung, Militaer und SS-Fuehrung fuer Verbrechen gegen die Menschlichkeit verurteilt. Grundlage des modernen Voelkerstrafrechts."},
+
+  // Umwelt & Zukunft
+  {term:"Pariser Abkommen",cat:"Umwelt",def:"Internationales Klimaabkommen von 2015: 196 Staaten verpflichten sich, Erderwaermung auf 1,5-2 Grad zu begrenzen. Nationale Klimaplaene (NDCs) muessen regelmaessig versschaerft werden. USA traten 2021 wieder bei."},
+  {term:"Europaeischer Green Deal",cat:"Umwelt",def:"EU-Strategie zum klimaneutralen Europa bis 2050. Fit-for-55-Paket: 55% CO2-Reduktion bis 2030. Umfasst Emissionshandel, Gebaeuderenovierung, Verbrennerverbot 2035, nachhaltige Landwirtschaft."},
+  {term:"CO2-Bepreisung",cat:"Umwelt",def:"Wirtschaftspolitisches Instrument: CO2-Ausstoss wird mit einem Preis belegt, um klimaschaedliche Aktivitaeten zu verteuern. EU: Emissionshandel (ETS). Deutschland: nationaler CO2-Preis seit 2021."},
+  {term:"Atomausstieg",cat:"Umwelt",def:"Deutschlands Entscheidung, Kernenergie schrittweise aufzugeben. Beschlossen 2000 (rot-gruen), nach Fukushima 2011 beschleunigt. Letztes AKW abgeschaltet April 2023. International umstrittene Entscheidung."},
+  {term:"Biodiversitaet",cat:"Umwelt",def:"Artenvielfalt als politisches Thema: UN-Biodiversitaetskonvention, Kunming-Montreal-Abkommen 2022 (30% Schutzflaechen bis 2030). In Deutschland: Insektensterben, Rueckgang der Vogelarten, Moorschutz."},
+  {term:"Klimagerechtigkeit",cat:"Umwelt",def:"Globale Perspektive: Industrielaender verursachten Grossteil der historischen Emissionen, Entwicklungslaender leiden staerker unter Folgen. Klimafinanzierung: 100 Mrd. USD/Jahr-Zusage der Industrielaender (oft nicht erfuellt)."},
+
+  // Zukunftsthemen
+  {term:"Digitale Souveraenitaet",cat:"Zukunft",def:"Faehigkeit eines Staates, digitale Infrastruktur und Daten selbst zu kontrollieren. Deutschland: Abhaengigkeit von US-Cloud-Anbietern als Problem. GAIA-X als europaeische Cloud-Initiative."},
+  {term:"Kuenstliche Intelligenz",cat:"Zukunft",def:"KI als politisches Thema: EU AI Act (2024) reguliert KI nach Risikoklassen. Fragen: Bias in Algorithmen, Ueberwachung, Arbeitsmarktfolgen, autonome Waffen, Desinformation durch generative KI."},
+  {term:"Demografischer Wandel",cat:"Zukunft",def:"Alterung der deutschen Gesellschaft: Geburtenrate zu niedrig fuer Bevoelkerungserhalt. Bis 2040: mehr Rentner als Erwerbstaetige. Politische Folgen: Rentenfinanzierung, Fachkraeftemangel, kommunale Daseinsvorsorge."},
+  {term:"Migration",cat:"Zukunft",def:"Zu- und Abwanderung von Menschen. In Deutschland politisch stark umstritten. Asylantraege 2023: ca. 350.000. Unterschied: Asylrecht (individueller Schutz), Fachkraeftemigration (wirtschaftlich), Familiennachzug."},
+  {term:"Rechtspopulismus",cat:"Zukunft",def:"Politische Bewegungen, die 'das Volk' gegen politische Eliten und Migranten ausspielen. In Europa stark gewachsen: AfD (Deutschland), RN (Frankreich), Meloni (Italien). Herausforderung fuer liberale Demokratien."},
+  {term:"Wahlkampf",cat:"Demokratie",def:"Organisierte Bemuehungen einer Partei oder eines Kandidaten, Waehler zu ueberzeugen. Instrumente: Plakate, Social Media, TV-Debatten, Kanzlerkandidaten. Regulated durch Parteiengesetz und Rundfunkrecht."},
+  {term:"Politikverdrossenheit",cat:"Gesellschaft",def:"Skepsis oder Ablehnung gegenueber Politik und Politikern. Symptom: sinkende Wahlbeteiligung, Mitgliederschwund in Parteien, Misstrauen. Ursachen: Entfremdung, Skandale, gefuhlte Wirkungslosigkeit."},
+  {term:"Protestbewegungen",cat:"Gesellschaft",def:"Organisierter sozialer Widerstand ausserhalb institutioneller Politik. Beispiele: Fridays for Future, Pegida, Querdenker. Demokratisch legitimiert solange legal; Testen die Grenzen der Demokratie."},
+  {term:"Buergerbeteiligung",cat:"Demokratie",def:"Einbeziehung von Buegrerinnen in politische Entscheidungen jenseits von Wahlen: Buergerversammlungen, Planungsdialoge, Online-Konsultationen, Buergerraete. Erganzt repraesentative Demokratie."},
+  {term:"Buergerrat",cat:"Demokratie",def:"Zufaellig ausgewaehlte repraesentative Gruppe von Buegrerinnen, die politische Empfehlungen erarbeitet. Beispiele: Buergerrat Klima (Deutschland 2021), irischer Verfassungskonvent. Losverfahren statt Wahl."},
+  {term:"Korruption",cat:"Gesellschaft",def:"Missbrauch anvertrauter Macht zum privaten Vorteil. Transparency International: Deutschland auf Platz 9 von 180 (2023). Strafbar nach StGB. GRECO (Europarat) ueberwacht Antikorruptionsmassnahmen."},
+  {term:"Transparenz",cat:"Gesellschaft",def:"Offenlegung staatlichen Handelns gegenueber Buergerinnen. Informationsfreiheitsgesetz des Bundes (2006) ermoeglicht Akteneinsicht. Lobbyregister, Veroeffentlichung von Nebeneinkuenften. Demokratisches Grundprinzip."}
+];
+var currentSrcFilter="alle";
+function openInApp(url,label){window.open(url,"_blank","noopener,noreferrer");}
+function showPage(id){document.querySelectorAll(".page").forEach(function(p){p.classList.remove("active");});document.getElementById("page-"+id).classList.add("active");window.scrollTo({top:0,behavior:"smooth"});}
+// ── LIVE NEWS ENGINE ──────────────────────────────────────────────
+var RSS_FEEDS=[
+  {url:"https://www.tagesschau.de/xml/rss2/",          src:"Tagesschau",      defCat:"innen"},
+  {url:"https://www.zdf.de/rss/zdf/nachrichten",        src:"ZDF",             defCat:"innen"},
+  {url:"https://www.deutschlandfunk.de/nachrichten.2378.de.rss", src:"Deutschlandfunk", defCat:"innen"},
+  {url:"https://rss.dw.com/rdf/rss-de-pol",            src:"Deutsche Welle",  defCat:"aussen"},
+  {url:"https://www.europarl.europa.eu/rss/doc/top-stories/de.xml", src:"EU-Parlament", defCat:"eu"}
+];
+var PROXY="https://api.rss2json.com/v1/api.json?count=8&rss_url=";
+var liveNews=[];
+var currentCat="alle";
+var refreshTimer=null;
+
+function catFromText(title,desc){
+  var t=(title+" "+desc).toLowerCase();
+  if(/eu|europ|brüssel|brussel|kommission|europarl|europarat|nato|ukraine|russland|usa|china|ausland|außen|aussen|international|krieg|konflikt|g7|g20/.test(t))
+    return /eu|europ|brüssel|brussel|kommission|europarl|europarat/.test(t)?"eu":"aussen";
+  if(/wirtschaft|rente|steuer|haushalt|inflation|arbeitslos|mindestlohn|finanzen|konjunktur|energie|klima/.test(t))
+    return "wirt";
+  return "innen";
+}
+
+function stripHtml(s){return s?s.replace(/<[^>]*>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"').replace(/&#39;/g,"'").trim():"";}
+
+function formatDate(ds){
+  try{
+    var d=new Date(ds);
+    return d.toLocaleDateString("de-DE",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})+" Uhr";
+  }catch(e){return ds||"";}
+}
+
+async function fetchFeed(feed){
+  var r=await fetch(PROXY+encodeURIComponent(feed.url));
+  var j=await r.json();
+  if(j.status!=="ok"||!j.items)return[];
+  return j.items.slice(0,8).map(function(item){
+    var title=stripHtml(item.title||"");
+    var desc=stripHtml(item.description||item.content||"");
+    if(desc.length>180)desc=desc.slice(0,177)+"…";
+    var cat=catFromText(title,desc);
+    return{
+      title:title,
+      text:desc,
+      url:item.link||item.url||"",
+      src:feed.src,
+      cat:cat,
+      cats:["alle",cat],
+      date:formatDate(item.pubDate),
+      pubDate:new Date(item.pubDate||0),
+      live:true
+    };
+  }).filter(function(i){return i.title&&i.url;});
+}
+
+async function fetchAllNews(){
+  var btn=document.getElementById("news-refresh-btn");
+  var status=document.getElementById("news-fetch-status");
+  if(btn)btn.classList.add("spinning");
+  showNewsLoading();
+  var results=[];
+  var errors=[];
+  await Promise.allSettled(RSS_FEEDS.map(function(f){
+    return fetchFeed(f).then(function(items){results=results.concat(items);}).catch(function(e){errors.push(f.src);});
+  }));
+  // deduplicate by title similarity
+  var seen={};
+  results=results.filter(function(n){
+    var key=n.title.slice(0,40).toLowerCase().replace(/\s+/g,"");
+    if(seen[key])return false;seen[key]=true;return true;
+  });
+  // sort newest first
+  results.sort(function(a,b){return b.pubDate-a.pubDate;});
+  if(results.length>0){
+    liveNews=results;
+    var now=new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+    var lbl=document.getElementById("news-last-updated");
+    if(lbl)lbl.textContent="Aktualisiert "+now+" Uhr \u00b7 "+results.length+" Meldungen";
+    if(errors.length){
+      status.style.display="block";
+      status.textContent="Hinweis: "+errors.join(", ")+" konnten nicht geladen werden. Andere Quellen erfolgreich.";
+    } else {
+      status.style.display="none";
+    }
+    updateHero();
+    renderNews(currentCat);
+  } else {
+    // full fallback
+    liveNews=NEWS.map(function(n){return Object.assign({},n,{live:false});});
+    status.style.display="block";
+    status.textContent="Keine Live-Verbindung moeglich. Zeige Beispielnachrichten. Bitte Internetverbindung pruefen.";
+    updateHero();
+    renderNews(currentCat);
+  }
+  if(btn)btn.classList.remove("spinning");
+}
+
+function showNewsLoading(){
+  var list=document.getElementById("news-list");
+  list.innerHTML='<div class="news-loading"><div class="spin-ring"></div>Nachrichten werden abgerufen ...</div>';
+}
+
+function updateHero(){
+  if(!liveNews.length)return;
+  var top=liveNews[0];
+  var titleEl=document.getElementById("hero-title-btn");
+  var srcEl=document.getElementById("hero-src-btn");
+  var bodyEl=document.getElementById("hero-body-text");
+  var dateEl=document.getElementById("hero-date");
+  if(titleEl)titleEl.textContent=top.title;
+  if(srcEl)srcEl.textContent=top.src;
+  if(bodyEl)bodyEl.textContent=top.text||"";
+  if(dateEl)dateEl.textContent=top.date||"";
+  if(titleEl)titleEl.onclick=function(){window.open(top.url,"_blank","noopener,noreferrer");};
+  if(srcEl)srcEl.onclick=function(){window.open(top.url,"_blank","noopener,noreferrer");};
+}
+
+function renderNews(cat){
+  currentCat=cat;
+  var list=document.getElementById("news-list");list.innerHTML="";
+  var src=liveNews.length?liveNews:NEWS;
+  var filtered=src.filter(function(n){return n.cats&&n.cats.includes(cat);});
+  if(!filtered.length){
+    list.innerHTML='<div class="lex-empty">Keine Meldungen in dieser Kategorie.</div>';return;
+  }
+  // skip first item (shown as hero) only when all-tab and live data
+  var items=(cat==="alle"&&liveNews.length)?filtered.slice(1):filtered;
+  items.forEach(function(item){
+    var d=document.createElement("div");d.className="news-item";
+    var liveBadge=item.live?'<span class="news-src-badge live">LIVE</span>':'<span class="news-src-badge">Beispiel</span>';
+    d.innerHTML='<div class="art-meta"><span class="cat-tag">'+item.cat+'</span> &middot; <span class="src-tag">'+item.src+'</span>'+liveBadge+' &middot; '+item.date+'</div>'
+      +'<div class="news-item-title">'+item.title+'</div>'
+      +'<div class="news-item-body">'+item.text+'</div>';
+    d.querySelector(".news-item-title").addEventListener("click",function(){window.open(item.url,"_blank","noopener,noreferrer");});
+    d.querySelector(".src-tag").addEventListener("click",function(){window.open(item.url,"_blank","noopener,noreferrer");});
+    list.appendChild(d);
+  });
+}
+
+function startAutoRefresh(){
+  if(refreshTimer)clearInterval(refreshTimer);
+  refreshTimer=setInterval(fetchAllNews,30*60*1000); // alle 30 min
+}
+// ── END LIVE NEWS ENGINE ──────────────────────────────────────────
+function renderSideList(){
+  var el=document.getElementById("side-list");el.innerHTML="";
+  SIDE_SOURCES.forEach(function(s){
+    var d=document.createElement("div");d.className="side-item";
+    d.innerHTML='<div class="side-num">'+s[0]+'</div><div class="side-title">'+s[1]+'</div><div class="side-meta">'+s[2]+'</div>';
+    d.addEventListener("click",function(){openInApp(s[3],s[4]);});
+    el.appendChild(d);
+  });
+}
+function renderMiniCards(){
+  var el=document.getElementById("card-row");el.innerHTML="";
+  MINI_CARDS.forEach(function(c){
+    var d=document.createElement("div");d.className="mini-card";
+    d.innerHTML='<div class="mini-card-meta">'+c.meta+'</div><div class="mini-card-title">'+c.title+'</div><div class="mini-card-body">'+c.body+'</div>';
+    d.querySelector(".mini-card-title").addEventListener("click",function(){openInApp(c.url,c.name);});
+    el.appendChild(d);
+  });
+}
+function renderSourceFilters(){
+  var bar=document.getElementById("src-filter-bar");bar.innerHTML="";
+  SRC_CATS.forEach(function(cat){
+    var btn=document.createElement("button");btn.className="cat-btn"+(cat==="alle"?" active":"");btn.textContent=cat;
+    btn.addEventListener("click",function(){bar.querySelectorAll(".cat-btn").forEach(function(b){b.classList.remove("active");});btn.classList.add("active");currentSrcFilter=cat;renderSourceGrid();});
+    bar.appendChild(btn);
+  });
+}
+function renderSourceGrid(){
+  var grid=document.getElementById("sources-grid");grid.innerHTML="";
+  var items=currentSrcFilter==="alle"?SOURCES:SOURCES.filter(function(s){return s.tag===currentSrcFilter;});
+  if(!items.length){grid.innerHTML='<div style="padding:20px;color:var(--muted);font-style:italic;grid-column:1/-1">Keine Quellen.</div>';return;}
+  items.forEach(function(s){
+    var c=document.createElement("div");c.className="source-card";
+    c.innerHTML='<div class="sc-row"><div class="sc-name">'+s.name+'</div><div class="sc-flag">'+s.flag+'</div></div><div class="sc-badges"><span class="sc-tag">'+s.tag+'</span>'+(s.free?'<span class="badge-free">&#10003; Kostenlos</span>':'<span class="badge-part">~ Teilweise frei</span>')+'</div><div class="sc-desc">'+s.desc+'</div><div class="sc-link">'+s.domain+' &#8599;</div>';
+    c.addEventListener("click",function(){openInApp(s.url,s.name);});
+    grid.appendChild(c);
+  });
+}
+function renderEdu(){
+  var grid=document.getElementById("edu-grid");grid.innerHTML="";
+  EDU.forEach(function(track){
+    var card=document.createElement("div");card.className="edu-card";
+    var stepsHtml=track.steps.map(function(s,i){return '<li class="edu-step"><span class="step-num">'+String(i+1).padStart(2,"0")+'</span><span>'+s+'</span></li>';}).join("");
+    card.innerHTML='<div class="edu-head" style="background:'+track.color+';color:#fff"><span class="edu-emoji">'+track.emoji+'</span><div class="edu-level">'+track.level+'</div><div class="edu-title-text">'+track.title+'</div></div><div class="edu-body"><ul class="edu-steps">'+stepsHtml+'</ul></div>';
+    var linkDiv=document.createElement("div");linkDiv.className="edu-link-btns";
+    track.links.forEach(function(link){
+      var btn=document.createElement("button");btn.className="edu-link-btn";btn.textContent=link[0];
+      btn.addEventListener("click",function(){openInApp(link[1],link[0]);});
+      linkDiv.appendChild(btn);
+    });
+    card.querySelector(".edu-body").appendChild(linkDiv);
+    grid.appendChild(card);
+  });
+}
+function renderTicker(){
+  var inner=document.getElementById("ticker-inner");
+  inner.innerHTML=TICKER_TEXTS.concat(TICKER_TEXTS).map(function(t){return '<span class="t-item">'+t+' <span class="t-sep">///</span></span>';}).join("");
+}
+function renderLex(items){
+  var grid=document.getElementById("lex-grid");
+  if(!items||!items.length){grid.innerHTML='<div class="lex-empty">Kein Eintrag gefunden. Versuche einen anderen Suchbegriff oder eine andere Kategorie.</div>';return;}
+  grid.innerHTML=items.map(function(e){
+    var isCustom=e.custom?true:false;
+    var delBtn=isCustom?'<div class="lex-card-actions"><button class="lex-del-btn" data-term="'+encodeURIComponent(e.term)+'">&#10005; Loeschen</button></div>':'';
+    return '<div class="lex-card'+(isCustom?' custom':'')+'">'+delBtn+'<div class="lex-term">'+e.term+'</div><div class="lex-cat">'+e.cat+'</div><div class="lex-def">'+e.def+'</div></div>';
+  }).join("");
+  grid.querySelectorAll(".lex-del-btn").forEach(function(btn){
+    btn.addEventListener("click",function(ev){
+      ev.stopPropagation();
+      var t=decodeURIComponent(btn.dataset.term);
+      if(!confirm('Eintrag "'+t+'" wirklich loeschen?'))return;
+      var saved=loadCustom();
+      var updated=saved.filter(function(e){return e.term!==t;});
+      saveCustom(updated);
+      applyFilter();
+    });
+  });
+}
+function getAllLex(){
+  var custom=loadCustom();
+  var customTerms=custom.map(function(e){return e.term.toLowerCase();});
+  var base=LEXIKON.filter(function(e){return customTerms.indexOf(e.term.toLowerCase())<0;});
+  return base.concat(custom.map(function(e){return Object.assign({},e,{custom:true});}))
+    .sort(function(a,b){return a.term.localeCompare(b.term,"de");});
+}
+function loadCustom(){
+  try{return JSON.parse(localStorage.getItem("polis_lex")||"[]");}catch(e){return[];}
+}
+function saveCustom(arr){
+  localStorage.setItem("polis_lex",JSON.stringify(arr));
+}
+var lexActiveCat="alle";
+function applyFilter(){
+  var q=document.getElementById("lex-search").value.trim().toLowerCase();
+  var all=getAllLex();
+  var filtered=all.filter(function(e){
+    var catOk=lexActiveCat==="alle"||e.cat===lexActiveCat;
+    var searchOk=!q||e.term.toLowerCase().includes(q)||e.def.toLowerCase().includes(q)||e.cat.toLowerCase().includes(q);
+    return catOk&&searchOk;
+  });
+  var total=all.length;var custom=loadCustom().length;
+  document.getElementById("lex-stats").textContent=
+    filtered.length+" von "+total+" Eintraegen"+(custom?" (davon "+custom+" eigene)":"")+(lexActiveCat!=="alle"?" in Kategorie "+lexActiveCat:"")+(q?" fuer '"+q+"'":"");
+  renderLex(filtered);
+}
+function getAllCats(){
+  var cats={};
+  getAllLex().forEach(function(e){cats[e.cat]=(cats[e.cat]||0)+1;});
+  return Object.keys(cats).sort(function(a,b){return a.localeCompare(b,"de");}).map(function(c){return{name:c,count:cats[c]};});
+}
+function renderCatBar(){
+  var bar=document.getElementById("lex-cat-bar");bar.innerHTML="";
+  var all=getAllLex().length;
+  var pills=[{name:"alle",count:all}].concat(getAllCats());
+  pills.forEach(function(c){
+    var btn=document.createElement("button");btn.className="lex-cat-pill"+(c.name===lexActiveCat?" active":"");
+    btn.textContent=c.name+" ("+c.count+")";
+    btn.addEventListener("click",function(){lexActiveCat=c.name;renderCatBar();applyFilter();});
+    bar.appendChild(btn);
+  });
+}
+function rebuildCatSelect(){
+  var sel=document.getElementById("lf-cat-select");
+  var cur=sel.value;
+  // keep first two options (placeholder + new)
+  while(sel.options.length>2)sel.remove(2);
+  var cats=getAllCats().map(function(c){return c.name;});
+  cats.forEach(function(c){
+    var opt=document.createElement("option");opt.value=c;opt.textContent=c;
+    sel.insertBefore(opt,sel.options[sel.options.length-1]);
+  });
+  if(cur&&cur!=="__new__")sel.value=cur;
+}
+function filterLex(q){applyFilter();}
+// Init lexicon UI
+function initLexForm(){
+  document.getElementById("lex-add-btn").addEventListener("click",function(){
+    var fw=document.getElementById("lex-form-wrap");
+    var open=fw.style.display!=="none";
+    fw.style.display=open?"none":"block";
+    if(!open){rebuildCatSelect();document.getElementById("lf-term").focus();}
+  });
+  document.getElementById("lex-form-close").addEventListener("click",function(){
+    document.getElementById("lex-form-wrap").style.display="none";
+  });
+  document.getElementById("lf-cat-select").addEventListener("change",function(){
+    var newInp=document.getElementById("lf-cat-new");
+    newInp.style.display=this.value==="__new__"?"block":"none";
+    if(this.value==="__new__")newInp.focus();
+  });
+  document.getElementById("lf-save").addEventListener("click",function(){
+    var msg=document.getElementById("lf-msg");
+    msg.className="lf-msg";msg.textContent="";
+    var term=document.getElementById("lf-term").value.trim();
+    var catSel=document.getElementById("lf-cat-select").value;
+    var catNew=document.getElementById("lf-cat-new").value.trim();
+    var cat=catSel==="__new__"?catNew:catSel;
+    var def=document.getElementById("lf-def").value.trim();
+    if(!term){msg.className="lf-msg err";msg.textContent="Bitte einen Begriff eingeben.";return;}
+    if(!cat){msg.className="lf-msg err";msg.textContent="Bitte eine Kategorie waehlen oder eingeben.";return;}
+    if(!def){msg.className="lf-msg err";msg.textContent="Bitte eine Definition eingeben.";return;}
+    var all=getAllLex();
+    if(all.some(function(e){return e.term.toLowerCase()===term.toLowerCase();})){
+      msg.className="lf-msg err";msg.textContent='Der Begriff "'+term+'" existiert bereits.';return;
+    }
+    var saved=loadCustom();
+    saved.push({term:term,cat:cat,def:def});
+    saveCustom(saved);
+    // reset form
+    document.getElementById("lf-term").value="";
+    document.getElementById("lf-def").value="";
+    document.getElementById("lf-cat-select").value="";
+    document.getElementById("lf-cat-new").value="";
+    document.getElementById("lf-cat-new").style.display="none";
+    msg.className="lf-msg";msg.textContent='✓ "'+term+'" gespeichert!';
+    setTimeout(function(){msg.textContent="";},3000);
+    renderCatBar();applyFilter();rebuildCatSelect();
+  });
+  document.getElementById("lex-search").addEventListener("input",function(){applyFilter();});
+}
+function renderFooter(){
+  var el=document.getElementById("footer-links");el.innerHTML="";
+  FOOTER_LINKS.forEach(function(link){
+    var span=document.createElement("span");span.className="footer-link";span.textContent=link[0];
+    span.addEventListener("click",function(){openInApp(link[1],link[0]);});
+    el.appendChild(span);
+  });
+}
+// INIT
+var ds=new Date().toLocaleDateString("de-DE",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+document.getElementById("date-label").textContent=ds;
+document.getElementById("hero-date").textContent=ds;
+document.getElementById("edition-label").textContent="Heutige Ausgabe \u00b7 "+ds;
+renderTicker();renderSideList();renderMiniCards();renderSourceFilters();renderSourceGrid();renderEdu();initLexForm();renderCatBar();applyFilter();renderFooter();
+// Live news bootstrap
+liveNews=NEWS.map(function(n){return Object.assign({},n,{live:false});});
+updateHero();renderNews("alle");
+fetchAllNews().then(startAutoRefresh);
+document.getElementById("news-refresh-btn").addEventListener("click",fetchAllNews);
+document.querySelectorAll("#main-nav .nav-btn").forEach(function(btn){btn.addEventListener("click",function(){document.querySelectorAll(".nav-btn").forEach(function(b){b.classList.remove("active");});btn.classList.add("active");showPage(btn.dataset.page);});});
+document.querySelectorAll("#cat-bar .cat-btn").forEach(function(btn){btn.addEventListener("click",function(){document.querySelectorAll("#cat-bar .cat-btn").forEach(function(b){b.classList.remove("active");});btn.classList.add("active");renderNews(btn.dataset.cat);});})
+document.getElementById("hero-title-btn").addEventListener("click",function(){openInApp("https://www.tagesschau.de/politik","Tagesschau Politik");});
+document.getElementById("hero-src-btn").addEventListener("click",function(){openInApp("https://www.tagesschau.de/politik","Tagesschau");});
+</script>
+</body>
+</html>
